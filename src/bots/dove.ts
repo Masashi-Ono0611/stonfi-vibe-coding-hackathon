@@ -1,12 +1,30 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
+import { generateResponse } from "../shared/llm.js";
 import type { DebateRound } from "../shared/types.js";
 
-export function createDoveBot(hawkUsername: string, managerUsername: string) {
+const DOVE_SYSTEM_PROMPT = `You are Dove, an aggressive crypto trader on TON blockchain. Your job is to ALWAYS argue FOR the trade, even when data looks concerning. That's your role in this debate.
+
+Your style: Optimistic, opportunity-focused. You see gas as a cost of doing business, not a dealbreaker.
+
+Rules:
+- You MUST always end with "I recommend SWAP."
+- Be concise (2-3 sentences max)
+- Start with an emoji (📈 for first response, 📊 for final rebuttal)
+- Always end your message with "@HawkConservBot"
+- React to the specific data and arguments provided
+- NEVER say "not recommended" or "I recommend HOLD" — you are the aggressive trader
+- Respond ONLY in English. Never use Chinese, Japanese, or any other language.`;
+
+export function createDoveBot(
+  hawkUsername: string,
+  managerUsername: string,
+  onSecondResponse?: (chatId: number, responseCount: number) => void
+) {
   const bot = new Bot(config.bot.doveToken);
   let round: DebateRound | null = null;
 
-  bot.on("message", (ctx) => {
+  bot.on("message", async (ctx) => {
     const chatId = ctx.chat.id;
     const fromUsername = ctx.from?.username;
     const text = ctx.message.text || "";
@@ -21,11 +39,16 @@ export function createDoveBot(hawkUsername: string, managerUsername: string) {
       round.doveResponseCount === 0
     ) {
       round.doveResponseCount++;
-      console.log(`[Dove] → 1st response (count=${round.doveResponseCount}): PRO SWAP`);
-      ctx.reply(
-        `📈 RFQ from ${(text.match(/Resolver: (\S+)/)?.[1]) || "LP"} shows ${text.match(/([\d.]+) TON → ([\d.]+) STON/)?.[0] || "favorable rate"}. I recommend SWAP. @${hawkUsername}`,
-        { reply_to_message_id: ctx.message.message_id }
-      );
+      console.log("[Dove] → Generating 1st LLM response...");
+
+      try {
+        const response = await generateResponse(DOVE_SYSTEM_PROMPT, text);
+        ctx.reply(response, { reply_to_message_id: ctx.message.message_id });
+        console.log(`[Dove] → Sent: ${response.slice(0, 80)}...`);
+      } catch (err: any) {
+        console.error("[Dove] LLM error:", err.message);
+        ctx.reply(`📈 I recommend SWAP. @${hawkUsername}`, { reply_to_message_id: ctx.message.message_id });
+      }
       return;
     }
 
@@ -36,11 +59,18 @@ export function createDoveBot(hawkUsername: string, managerUsername: string) {
       (text.includes("HOLD") || text.includes("risk"))
     ) {
       round.doveResponseCount++;
-      console.log(`[Dove] → 2nd response (count=${round.doveResponseCount}): Final SWAP`);
-      ctx.reply(
-        "📊 Price opportunity is clear and this window won't last. Execution cost is marginal at this size. Final recommendation: SWAP.",
-        { reply_to_message_id: ctx.message.message_id }
-      );
+      console.log("[Dove] → Generating final LLM response...");
+
+      try {
+        const response = await generateResponse(DOVE_SYSTEM_PROMPT, `Hawk argues: "${text}"\n\nGive your final rebuttal.`);
+        ctx.reply(response, { reply_to_message_id: ctx.message.message_id });
+        console.log(`[Dove] → Sent: ${response.slice(0, 80)}...`);
+      } catch (err: any) {
+        console.error("[Dove] LLM error:", err.message);
+        ctx.reply("📊 I recommend SWAP.", { reply_to_message_id: ctx.message.message_id });
+      } finally {
+        if (onSecondResponse) onSecondResponse(chatId, round.doveResponseCount);
+      }
     }
   });
 

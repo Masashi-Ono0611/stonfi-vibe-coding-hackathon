@@ -7,9 +7,10 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@ston-fi/omniston-sdk": "0.7.9",
-    "grammy": "^1.35.0",
-    "dotenv": "^16.4.0"
+    "dotenv": "^16.4.0",
+    "grammy": "^1.35.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

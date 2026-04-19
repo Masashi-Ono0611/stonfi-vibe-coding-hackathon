@@ -11,7 +11,11 @@ async function main() {
   console.log("=== Hawk & Dove — Two-Bot Trading Council ===\n");
 
   const hawk = createHawkBot(DOVE_USERNAME);
-  const dove = createDoveBot(HAWK_USERNAME, MANAGER_USERNAME);
+  const dove = createDoveBot(HAWK_USERNAME, MANAGER_USERNAME, (chatId, count) => {
+    setTimeout(() => {
+      manager.onDebateComplete(chatId, count);
+    }, 1000);
+  });
   const manager = createManagerBot({
     onDebateStart: () => {
       console.log("[System] Debate started");
@@ -24,17 +28,6 @@ async function main() {
       dove.reset();
     },
     getLatestQuote,
-  });
-
-  // After Dove's 2nd response, trigger Manager's decision
-  dove.bot.on("message", (ctx) => {
-    const round = dove.getRound();
-    if (!round || ctx.chat.id > 0) return;
-    if (round.doveResponseCount >= 2) {
-      setTimeout(() => {
-        manager.onDebateComplete(ctx.chat.id, round.doveResponseCount);
-      }, 1000);
-    }
   });
 
   // Start Omniston RFQ monitoring (for live data in debates)
