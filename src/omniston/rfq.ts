@@ -5,7 +5,9 @@ import type { QuoteData } from "../shared/types.js";
 let subscription: any = null;
 let lastQuoteId: string | null = null;
 let monitoring = false;
+let omnistonInstance: any = null;
 let latestQuote: QuoteData | null = null;
+let reconnectTimer: NodeJS.Timeout | null = null;
 
 function formatUsdt(units: string): string {
   return (Number(units) / 1e6).toFixed(2);
@@ -19,12 +21,54 @@ export function getLatestQuote(): QuoteData | null {
   return latestQuote;
 }
 
+function cleanup() {
+  if (subscription) {
+    try {
+      subscription.unsubscribe();
+    } catch (err) {
+      // Ignore cleanup errors
+    }
+    subscription = null;
+  }
+  if (omnistonInstance) {
+    try {
+      omnistonInstance.disconnect();
+    } catch (err) {
+      // Ignore cleanup errors
+    }
+    omnistonInstance = null;
+  }
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  lastQuoteId = null;
+}
+
+function scheduleReconnect() {
+  if (!monitoring) return;
+
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+  }
+
+  reconnectTimer = setTimeout(() => {
+    console.log("[RFQ] Attempting to reconnect...");
+    cleanup();
+    startMonitoring();
+  }, 5000); // Reconnect after 5 seconds
+}
+
 export function startMonitoring() {
-  if (monitoring) return;
+  if (monitoring) {
+    console.log("[RFQ] Already monitoring, skipping");
+    return;
+  }
+
   monitoring = true;
 
   try {
-    const omniston = new Omniston({ apiUrl: config.omniston.wsUrl });
+    omnistonInstance = new Omniston({ apiUrl: config.omniston.wsUrl });
 
     console.log(`[RFQ] Connecting to ${config.omniston.wsUrl}...`);
 
@@ -47,7 +91,7 @@ export function startMonitoring() {
       },
     };
 
-    subscription = omniston.requestForQuote(rfq).subscribe({
+    subscription = omnistonInstance.requestForQuote(rfq).subscribe({
       next: (event: any) => {
         if (event.type === "ack") {
           console.log(`[RFQ] Subscribed (rfqId=${event.rfqId})`);
@@ -84,6 +128,14 @@ export function startMonitoring() {
       },
       error: (err: any) => {
         console.error("[RFQ] Stream error:", err.message);
+        console.log("[RFQ] Cleaning up and scheduling reconnection...");
+        cleanup();
+        scheduleReconnect();
+      },
+      complete: () => {
+        console.log("[RFQ] Stream completed (server closed connection)");
+        cleanup();
+        scheduleReconnect();
       },
     });
 
@@ -91,17 +143,15 @@ export function startMonitoring() {
   } catch (err: any) {
     console.error("[RFQ] Failed to start monitoring:", err.message);
     console.log("[RFQ] Bots will run in manual mode (use /debate)");
-    monitoring = false;
+    cleanup();
+    scheduleReconnect();
   }
 }
 
 export function stopMonitoring() {
-  if (subscription) {
-    subscription.unsubscribe();
-    subscription = null;
-  }
+  cleanup();
   monitoring = false;
-  lastQuoteId = null;
+  latestQuote = null;
   console.log("[RFQ] Stopped");
 }
 
