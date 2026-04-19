@@ -3,11 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /build
 
-# Copy package files from root
+# Copy package files from root (package.json + package-lock.json)
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --production=false
+RUN npm install
 
 # Production stage
 FROM node:20-alpine

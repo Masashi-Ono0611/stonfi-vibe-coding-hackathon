@@ -1,8 +1,6 @@
 # Dependencies
 node_modules
 npm-debug.log
-package-lock.json
-yarn.lock
 
 # Build artifacts
 dist
@@ -41,3 +39,5 @@ logs
 # Temporary files
 tmp
 temp
+
+# NOTE: Don't exclude package-lock.json or package.json
