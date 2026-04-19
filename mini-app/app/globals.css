@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1a1a1a;
+  /* Omniston Widget Color Palette */
+  --background: #f4f4f4;
+  --foreground: #202020;
+  --border: #e8e8e8;
+  --secondary: #8d8d8d;
+  --accent: #0071f0;
 }
 
 @theme inline {

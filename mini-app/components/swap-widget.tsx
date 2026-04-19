@@ -26,7 +26,6 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
     if (!containerRef.current || !walletAddress) return;
 
     if (!publicKey) {
-      // If publicKey is not available, just show the widget without connecting wallet
       let isMounted = true;
 
       omnistonWidgetLoader.load().then((WidgetConstructor) => {
@@ -113,8 +112,8 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
 
   if (!walletAddress) {
     return (
-      <div className="w-full max-w-[420px] mx-auto bg-gray-50 rounded-lg p-8 border border-gray-200 text-center">
-        <p className="text-gray-500 text-sm">Connect your TON wallet to start swapping</p>
+      <div className="w-full max-w-[420px] mx-auto bg-[#f9f9f9] rounded-lg p-8 border border-[#e8e8e8] text-center">
+        <p className="text-[#8d8d8d] text-sm">Connect your TON wallet to start swapping</p>
       </div>
     );
   }
