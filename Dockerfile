@@ -1,10 +1,14 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-WORKDIR /build
+WORKDIR /app
 
-# Copy package files from root (package.json + package-lock.json)
+# Copy project files
 COPY package*.json ./
+COPY tsconfig.json ./
+
+# Copy ONLY src directory (bot code)
+COPY src ./src
 
 # Install dependencies
 RUN npm install
@@ -14,12 +18,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy dependencies from builder
-COPY --from=builder /build/node_modules ./node_modules
-COPY --from=builder /build/package*.json ./
-
-# Copy ONLY src directory (bot code)
-COPY --from=builder /build/src ./src
+# Copy from builder stage
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/tsconfig.json ./
 
 # Start command
 CMD ["npm", "start"]
