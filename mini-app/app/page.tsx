@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePrivy, useLogin, useLogout } from '@privy-io/react-auth';
 import { useCreateWallet, useSignRawHash } from '@privy-io/react-auth/extended-chains';
-import { TonConnectButton, TonConnectUIProvider, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
+import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
 import { SwapWidget } from '@/components/swap-widget';
 import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
 import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
@@ -188,7 +188,6 @@ export default function Home() {
   const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('privy');
   const { authenticated, user } = usePrivy();
   const { signRawHash } = useSignRawHash();
-  const { wallet: tcWallet, address: tcAddress } = useTonWallet();
 
   const [walletInfo, setWalletInfo] = useState<{
     address: string;
@@ -197,7 +196,7 @@ export default function Home() {
   } | null>(null);
 
   // Handle wallet ready callback
-  const handleWalletReady = (wallet: { address: string; publicKey?: string }) => {
+  const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
     if (connectionMethod === 'privy') {
       const adapter = new PrivyTonConnectAdapter();
       // Note: We'll initialize the adapter when SwapWidget mounts
@@ -219,46 +218,44 @@ export default function Home() {
   const hasWallet = !!walletInfo;
 
   return (
-    <TonConnectUIProvider>
-      <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
-        <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
-          <div className="max-w-lg mx-auto flex items-center gap-2">
-            <span className="text-lg">🦅</span>
-            <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove Trading Council</h1>
-          </div>
-        </header>
+    <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
+      <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
+        <div className="max-w-lg mx-auto flex items-center gap-2">
+          <span className="text-lg">🦅</span>
+          <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove Trading Council</h1>
+        </div>
+      </header>
 
-        <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
+      <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
+        <section>
+          <ConnectionSelector
+            selected={connectionMethod}
+            onSelect={setConnectionMethod}
+          />
+        </section>
+
+        <section>
+          {connectionMethod === 'privy' ? (
+            <PrivyWalletSection onWalletReady={handleWalletReady} />
+          ) : (
+            <TonConnectWalletSection onWalletReady={handleWalletReady} />
+          )}
+        </section>
+
+        {hasWallet && walletInfo && (
           <section>
-            <ConnectionSelector
-              selected={connectionMethod}
-              onSelect={setConnectionMethod}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm">🔄</span>
+              <h2 className="text-sm font-semibold text-[#202020]">Swap</h2>
+            </div>
+            <SwapWidget
+              walletAddress={walletInfo.address}
+              publicKey={walletInfo.publicKey || ''}
+              signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
             />
           </section>
-
-          <section>
-            {connectionMethod === 'privy' ? (
-              <PrivyWalletSection onWalletReady={handleWalletReady} />
-            ) : (
-              <TonConnectWalletSection onWalletReady={handleWalletReady} />
-            )}
-          </section>
-
-          {hasWallet && walletInfo && (
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm">🔄</span>
-                <h2 className="text-sm font-semibold text-[#202020]">Swap</h2>
-              </div>
-              <SwapWidget
-                walletAddress={walletInfo.address}
-                publicKey={walletInfo.publicKey || ''}
-                signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
-              />
-            </section>
-          )}
-        </main>
-      </div>
-    </TonConnectUIProvider>
+        )}
+      </main>
+    </div>
   );
 }
