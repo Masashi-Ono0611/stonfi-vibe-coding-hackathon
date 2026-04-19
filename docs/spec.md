@@ -5,14 +5,14 @@ Two AI bots with opposing risk profiles debate in a Telegram group chat and auto
 
 ## Core Concept
 - **Hawk Bot** (conservative) and **Dove Bot** (aggressive) debate in a shared group chat via Telegram's Bot-to-Bot Communication
-- A **Manager Bot** monitors Omniston RFQ stream and triggers debates
+- A **Manager Bot** monitors Omniston RFQ stream and provides live data for debates
 - After a fixed-round debate, the Manager announces `SWAP` or `HOLD`
 - Users observe the debate in real-time and can override
 
 ## Architecture
 
 ```
-Omniston RFQ Stream (or /debate command)
+/debate command (with live Omniston RFQ data)
         │
         ▼
   Manager Bot ──── triggers debate, announces decision
@@ -34,9 +34,9 @@ Omniston RFQ Stream (or /debate command)
 ## Components
 
 ### 1. Manager Bot
-- Subscribes to Omniston RFQ WebSocket stream
+- Subscribes to Omniston RFQ WebSocket stream for live quote data
 - Monitors asset pairs (e.g., TON/STON, jUSDT/TON)
-- When trigger condition met (price change %, spread %, etc.), posts debate prompt to group
+- User sends `/debate` to trigger a debate with current RFQ data
 - After debate concludes, announces final decision (`SWAP` or `HOLD`)
 - Executes swap via STON.fi DEX SDK on `SWAP` consensus
 - Bot setup: 3 bots created manually via BotFather for MVP (Managed Bots API as future enhancement)
@@ -49,7 +49,7 @@ Omniston RFQ Stream (or /debate command)
 
 ### 3. Dove Bot (Aggressive)
 - Personality: Opportunity-seeking, focuses on upside capture
-- Decision factors: RFQ price advantage, spread opportunity
+- Decision factors: RFQ price advantage, market opportunity
 - Default stance: "Execute if RFQ is favorable"
 - Receives RFQ data from Manager's trigger, proposes swap with data
 - Delivers final rebuttal after Hawk's counter-argument
@@ -58,7 +58,7 @@ Omniston RFQ Stream (or /debate command)
 
 | Round | Speaker | Action |
 |-------|---------|--------|
-| 0 | Manager | Posts trigger with RFQ data: *"Signal: TON/STON spread 2.3%. Debate?"* |
+| 0 | Manager | Posts trigger with RFQ data: *"Signal: TON/STON — 1.00 TON → 4.19 STON. Price: 4.190000. Debate?"* |
 | 1 | Dove | Responds with SWAP recommendation + data |
 | 2 | Hawk | Counter-argues with HOLD stance + risk data |
 | 3 | Dove | Final rebuttal (SWAP or concedes to HOLD) |
@@ -74,7 +74,7 @@ Omniston RFQ Stream (or /debate command)
 - User override: `/approve` or `/reject` at any time during debate
 
 ## Technical Stack
-- **Omniston SDK**: `@ston-fi/omniston-sdk` — RFQ WebSocket streaming
+- **Omniston SDK**: `@ston-fi/omniston-sdk` — RFQ WebSocket streaming (live data for debates)
 - **STON.fi DEX SDK**: `@ston-fi/sdk` — Swap transaction building
 - **Telegram Bot API**: Bot-to-Bot Communication (grammy)
 - **Runtime**: Node.js (bot backend) + optional Mini App (dashboard)
@@ -92,18 +92,17 @@ See [`feasibility-test/SPEC.md`](../feasibility-test/SPEC.md) for full test spec
 
 ## User Experience
 1. User opens Manager Bot in Telegram
-2. User configures: asset pair, trigger thresholds, risk limits
+2. User configures: asset pair, risk limits
 3. Manager Bot adds user to a dedicated group with Hawk & Dove
-4. Omniston RFQ triggers a debate (or user sends `/debate` for demo)
+4. User sends `/debate` to trigger a debate with live Omniston data
 5. User watches debate unfold in real-time
 6. Manager announces decision, swap executes on consensus
 
 ## Hackathon Scope
-- MVP: 3 bots (Manager, Hawk, Dove) + Omniston RFQ stream + 1 swap pair
+- MVP: 3 bots (Manager, Hawk, Dove) + Omniston RFQ data + /debate trigger + 1 swap pair
 - Out of scope: Smart contracts, cross-chain, multi-asset portfolio, Managed Bots API, Mini App dashboard
 
 ## Next Steps
-1. Integrate Omniston RFQ stream as trigger (replace `/debate` command)
-2. Add LLM prompts for natural language debate (replace template responses)
+1. Add LLM prompts for natural language debate (replace template responses)
 3. Add Manager decision announcement after debate concludes
 4. Connect STON.fi DEX SDK for swap execution on consensus

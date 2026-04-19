@@ -47,13 +47,13 @@ GROUP_CHAT_ID=-100xxxxxxxxxx
 - Log all received updates to console
 
 ### Step 2: Trigger Test
-- Manager bot sends a message to the group: *"Test trigger: Should we swap TON for STON? Current price: 1 TON = 2.5 STON"*
+- Manager bot sends a message to the group: *"Test trigger: Should we swap TON for STON? Current price: 1 TON → 2.5 STON"*
 - Verify: Both Hawk and Dove receive this message
 
 ### Step 3: Debate Test
 - Dove responds to Manager's trigger: *"RFQ shows favorable rate. I recommend SWAP."*
 - Hawk responds to Dove: *"Slippage too high. I recommend HOLD."*
-- Dove replies to Hawk: *"Spread is within 1% tolerance. Final: SWAP."*
+- Dove replies to Hawk: *"Price opportunity is clear. Final: SWAP."*
 - Verify: All messages are received by the intended bots
 
 ### Step 4: Termination Test
@@ -62,14 +62,14 @@ GROUP_CHAT_ID=-100xxxxxxxxxx
 
 ## Expected Output
 ```
-[Manager] Signal: TON/STON spread 2.3%. Debate?
+[Manager] Signal: TON/STON — 1.00 TON → 2.50 STON. Price: 2.500000. Debate?
 [Hawk]   ← receives Manager's message (Test #1)
 [Dove]   ← receives Manager's message (Test #1)
 [Dove]   → "RFQ favorable. SWAP."
 [Hawk]   ← receives Dove's message (Test #2)
 [Hawk]   → "Slippage risk. HOLD."
 [Dove]   ← receives Hawk's message (Test #2)
-[Dove]   → "Spread acceptable. Final: SWAP."
+[Dove]   → "Price opportunity is clear. Final: SWAP."
 [Manager] ← both bots responded, debate complete (Test #3)
           → "Decision: SWAP" (Test #4: no further messages)
 ```
@@ -95,6 +95,6 @@ feasibility-test/
 ```
 
 ## Next Step After Test Passes
-- Integrate Omniston RFQ stream as trigger source (replace hardcoded trigger)
+- Integrate Omniston RFQ stream for live data in debates
 - Add LLM prompts for natural language debate (replace template responses)
 - Connect STON.fi DEX SDK for swap execution on consensus
