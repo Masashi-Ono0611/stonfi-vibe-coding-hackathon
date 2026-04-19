@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
 import { buildSwapDeepLink } from "../omniston/swap.js";
+import { delay, PACING } from "../shared/pacing.js";
 import type { QuoteData } from "../shared/types.js";
 
 interface DebateCallbacks {
@@ -25,7 +26,7 @@ export function createManagerBot(callbacks: DebateCallbacks) {
   }
 
   async function announceDecision(chatId: number, doveResponseCount: number) {
-    await new Promise((r) => setTimeout(r, 2000));
+    await delay(PACING.decisionPause);
     if (!debateActive) return;
     if (doveResponseCount >= 2) {
       const swapLink = buildSwapDeepLink();
