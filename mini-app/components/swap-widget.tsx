@@ -22,23 +22,14 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
   const widgetRef = useRef<OmnistonWidget | null>(null);
   const adapterRef = useRef<PrivyTonConnectAdapter | null>(null);
 
-  console.log('SwapWidget render:', { walletAddress, publicKey, hasSignRawHash: !!signRawHash });
-
   useEffect(() => {
-    console.log('SwapWidget useEffect:', { walletAddress, publicKey, hasContainer: !!containerRef.current });
-
-    if (!containerRef.current || !walletAddress) {
-      console.log('Early return: no container or address');
-      return;
-    }
+    if (!containerRef.current || !walletAddress) return;
 
     if (!publicKey) {
-      console.log('No publicKey, loading widget in standalone mode');
       // If publicKey is not available, just show the widget without connecting wallet
       let isMounted = true;
 
       omnistonWidgetLoader.load().then((WidgetConstructor) => {
-        console.log('Widget loaded in standalone mode');
         if (!isMounted || !containerRef.current) return;
 
         widgetRef.current = new WidgetConstructor({
@@ -64,20 +55,16 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
       };
     }
 
-    console.log('Has publicKey, initializing adapter');
     let isMounted = true;
 
     const initializeWidget = async () => {
       try {
-        console.log('Creating adapter...');
         const adapter = new PrivyTonConnectAdapter();
 
-        console.log('Connecting adapter...');
         await adapter.connect(
           walletAddress,
           publicKey,
           async (data: string) => {
-            console.log('Signing transaction:', data);
             const result = await signRawHash({
               address: walletAddress,
               chainType: 'ton',
@@ -90,15 +77,12 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
           }
         );
 
-        console.log('Adapter connected');
         adapterRef.current = adapter;
 
-        console.log('Loading Omniston Widget...');
         const WidgetConstructor = await omnistonWidgetLoader.load();
 
         if (!isMounted || !containerRef.current) return;
 
-        console.log('Creating widget with integrated tonconnect');
         widgetRef.current = new WidgetConstructor({
           tonconnect: {
             type: 'integrated',
@@ -110,9 +94,7 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
           },
         });
 
-        console.log('Mounting widget');
         widgetRef.current.mount(containerRef.current);
-        console.log('Widget mounted successfully');
       } catch (error) {
         console.error('Failed to initialize widget:', error);
       }
@@ -131,8 +113,8 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
 
   if (!walletAddress) {
     return (
-      <div className="w-full max-w-[420px] mx-auto bg-zinc-900 rounded-lg p-8 border border-zinc-800 text-center">
-        <p className="text-zinc-400 text-sm">Connect your TON wallet to start swapping</p>
+      <div className="w-full max-w-[420px] mx-auto bg-gray-50 rounded-lg p-8 border border-gray-200 text-center">
+        <p className="text-gray-500 text-sm">Connect your TON wallet to start swapping</p>
       </div>
     );
   }

@@ -48,8 +48,6 @@ export class PrivyTonConnectAdapter {
   }
 
   async connect(address: string, publicKey: string, signCallback: SignCallback) {
-    console.log('PrivyTonConnectAdapter.connect:', { address, publicKey });
-
     if (!address) {
       throw new Error('Address is required');
     }
