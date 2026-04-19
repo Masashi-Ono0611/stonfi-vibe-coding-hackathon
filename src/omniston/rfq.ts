@@ -65,20 +65,20 @@ export function startMonitoring() {
           if (q.quoteId === lastQuoteId) return;
           lastQuoteId = q.quoteId;
 
-          const bidNum = Number(q.bidUnits);
-          const askNum = Number(q.askUnits);
-          const price = askNum / bidNum;
+          const bidUsdt = Number(q.bidUnits) / 1e6;
+          const askBtc = Number(q.askUnits) / 1e8;
+          const priceUsdtPerBtc = bidUsdt / askBtc;
 
           latestQuote = {
             bidUnits: formatUsdt(q.bidUnits),
             askUnits: formatCbbtc(q.askUnits),
-            price: price.toFixed(8),
+            price: priceUsdtPerBtc.toFixed(2),
             resolverName: q.resolverName || "unknown",
             gasBudget: q.gasBudget ? String(Number(q.gasBudget) / 1e9) : "N/A",
           };
 
           console.log(
-            `[RFQ] Quote: ${formatUsdt(q.bidUnits)} USDT → ${formatCbbtc(q.askUnits)} cbBTC (price: ${latestQuote.price}, ${q.resolverName})`
+            `[RFQ] Quote: ${formatUsdt(q.bidUnits)} USDT → ${formatCbbtc(q.askUnits)} cbBTC (1 cbBTC = $${latestQuote.price}, ${q.resolverName})`
           );
         }
       },

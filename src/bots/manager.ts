@@ -17,7 +17,7 @@ export function createManagerBot(callbacks: DebateCallbacks) {
     if (data) {
       return [
         `📊 Signal: USDT/cbBTC — ${data.bidUnits} USDT → ${data.askUnits} cbBTC`,
-        `   Price: ${data.price} | Resolver: ${data.resolverName} | Gas: ${data.gasBudget} TON`,
+        `   1 cbBTC = $${data.price} | Resolver: ${data.resolverName}`,
         "   Debate?",
       ].join("\n");
     }
