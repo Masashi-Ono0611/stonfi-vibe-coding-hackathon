@@ -19,3 +19,7 @@ services:
         sync: false
       - key: GROUP_CHAT_ID
         sync: false
+      - key: ANTHROPIC_BASE_URL
+        value: https://cc.ai.cmsd.dev/api
+      - key: ANTHROPIC_AUTH_TOKEN
+        sync: false
