@@ -1,5 +1,6 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
+import { buildSwapDeepLink } from "../omniston/swap.js";
 import type { QuoteData } from "../shared/types.js";
 
 interface DebateCallbacks {
@@ -27,7 +28,15 @@ export function createManagerBot(callbacks: DebateCallbacks) {
     await new Promise((r) => setTimeout(r, 2000));
     if (!debateActive) return;
     if (doveResponseCount >= 2) {
-      await bot.api.sendMessage(chatId, "✅ Decision: SWAP (Dove's final stance)");
+      const swapLink = buildSwapDeepLink();
+      await bot.api.sendMessage(chatId, [
+        "✅ Decision: SWAP (Dove's final stance)",
+        "",
+        "🔗 Execute Swap",
+        swapLink,
+        "",
+        "Click to open STON.fi and sign with your wallet.",
+      ].join("\n"));
     } else {
       await bot.api.sendMessage(chatId, "⏸ Decision: HOLD (insufficient debate)");
     }
