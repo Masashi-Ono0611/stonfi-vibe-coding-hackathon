@@ -27,11 +27,11 @@ export function createHawkBot(doveUsername: string) {
 
     if (chatId > 0 || !round) return;
 
-    // Respond to Manager's trigger or Dove's SWAP argument
-    const shouldRespond = (
-      (text.includes("Signal:") && text.includes("Debate?") && round.hawkResponseCount === 0) ||
-      (fromUsername === doveUsername && round.hawkResponseCount === 0 && (text.includes("SWAP") || text.includes("recommend") || text.includes("favorable")))
-    );
+    // Only respond to Dove — never to Manager's trigger
+    const shouldRespond =
+      fromUsername === doveUsername &&
+      round.hawkResponseCount === 0 &&
+      (text.includes("SWAP") || text.includes("recommend") || text.includes("favorable"));
 
     if (!shouldRespond) return;
 
