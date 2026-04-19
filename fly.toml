@@ -1,21 +1,8 @@
-# fly.toml app configuration file generated for hawk-dove-bot on 2026-04-19T22:36:20+09:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
-app = 'hawk-dove-bot'
-primary_region = 'nrt'
+app = "hawk-dove-bot"
+primary_region = "nrt"
 
 [build]
-  dockerfile = 'Dockerfile'
+  dockerfile = "Dockerfile"
 
 [env]
-  NODE_ENV = 'production'
-
-[processes]
-  app = 'npm start'
-
-[[vm]]
-  memory = '256mb'
-  cpu_kind = 'shared'
-  cpus = 1
+  NODE_ENV = "production"

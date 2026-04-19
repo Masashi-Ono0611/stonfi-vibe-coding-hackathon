@@ -1,28 +1,16 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy project files
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Copy ONLY src directory (bot code)
-COPY src ./src
-
-# Install dependencies
-RUN npm install
-
-# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy from builder stage
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/tsconfig.json ./
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
 
-# Start command
+# Copy ONLY bot source code (exclude mini-app)
+COPY src ./src
+
+# Install dependencies
+RUN npm install --production
+
+# Start bot
 CMD ["npm", "start"]
