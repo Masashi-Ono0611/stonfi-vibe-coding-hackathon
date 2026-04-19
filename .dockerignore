@@ -1,13 +1,43 @@
+# Dependencies
 node_modules
 npm-debug.log
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist
+build
+.next
+out
+
+# Git
 .git
 .gitignore
-README.md
+
+# Environment files
 .env
 .env.local
 .env.*.local
-.DS_Store
-*.log
+
+# IDE
 .vscode
 .idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
 .claude
+
+# Documentation
+README.md
+*.md
+
+# Logs
+*.log
+logs
+
+# Temporary files
+tmp
+temp
