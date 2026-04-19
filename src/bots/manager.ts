@@ -41,6 +41,7 @@ export function createManagerBot(callbacks: DebateCallbacks) {
 
     // /debate command — manual trigger
     if (text.startsWith("/debate") && chatId < 0 && !debateActive) {
+      if (config.bot.groupChatId && String(chatId) !== config.bot.groupChatId) return;
       debateActive = true;
       const quote = callbacks.getLatestQuote();
       callbacks.onDebateStart(-1);
