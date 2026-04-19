@@ -33,17 +33,29 @@ export function createManagerBot(callbacks: DebateCallbacks) {
       const quote = callbacks.getLatestQuote();
       const swapLink = buildSwapDeepLink();
       if (quote) {
-        const image = await renderBuySignal(quote);
-        await bot.api.sendPhoto(chatId, new InputFile(image), {
-          caption: [
+        try {
+          const image = await renderBuySignal(quote);
+          await bot.api.sendPhoto(chatId, new InputFile(image), {
+            caption: [
+              "✅ Decision: SWAP",
+              "",
+              `1 cbBTC = $${quote.price}`,
+              "",
+              "🔗 Execute Swap",
+              swapLink,
+            ].join("\n"),
+          });
+        } catch (renderError) {
+          console.error("[Manager] Image generation failed, falling back to text:", renderError);
+          await bot.api.sendMessage(chatId, [
             "✅ Decision: SWAP",
             "",
             `1 cbBTC = $${quote.price}`,
             "",
             "🔗 Execute Swap",
             swapLink,
-          ].join("\n"),
-        });
+          ].join("\n"));
+        }
       } else {
         await bot.api.sendMessage(chatId, [
           "✅ Decision: SWAP",
