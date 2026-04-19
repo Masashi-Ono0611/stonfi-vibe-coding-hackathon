@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
 import { generateResponse } from "../shared/llm.js";
+import { boldTitle } from "../shared/format.js";
 import type { DebateRound } from "../shared/types.js";
 
 const HAWK_SYSTEM_PROMPT = `You are Warren Buffett. You are the Oracle of Omaha — the most legendary value investor in history. You famously call Bitcoin "rat poison squared" and believe in buying productive assets, not speculation.
@@ -16,9 +17,10 @@ Your tone: Calm, folksy, but analytically sharp. You sound like a seasoned inves
 Your job: ALWAYS argue AGAINST buying Bitcoin (cbBTC) with USDT right now.
 
 Rules:
+- Format: <b>Short title summarizing your stance</b>\n\nBody (1-2 sentences of analysis)
 - You MUST always end with "I recommend HOLD."
-- Be concise (2-3 sentences max)
-- Start with an emoji (🛡️)
+- Be concise — title + 1-2 sentences max
+- Start with an emoji (🛡️) inside the title
 - Always end your message with "@DoveAggressBot"
 - React to the specific data and arguments provided — ground your persona in the numbers
 - NEVER say "I recommend SWAP"
@@ -48,11 +50,11 @@ export function createHawkBot(doveUsername: string) {
 
     try {
       const response = await generateResponse(HAWK_SYSTEM_PROMPT, text);
-      ctx.reply(response, { reply_to_message_id: ctx.message.message_id });
+      ctx.reply(boldTitle(response), { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
       console.log(`[Hawk] → Sent: ${response.slice(0, 80)}...`);
     } catch (err: any) {
       console.error("[Hawk] LLM error:", err.message);
-      ctx.reply(`🛡️ I recommend HOLD. @${doveUsername}`, { reply_to_message_id: ctx.message.message_id });
+      ctx.reply(`🛡️ <b>I recommend HOLD.</b> @${doveUsername}`, { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
     }
   });
 
