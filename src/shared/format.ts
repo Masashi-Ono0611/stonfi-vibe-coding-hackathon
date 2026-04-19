@@ -10,3 +10,10 @@ export function boldTitle(text: string): string {
   const body = text.slice(idx).trim();
   return `<b>${title}</b>\n\n${body}`;
 }
+
+export function ensureClosing(text: string, closing: string): string {
+  if (!text.includes("I recommend")) {
+    return `${text}\n\n${closing}`;
+  }
+  return text;
+}

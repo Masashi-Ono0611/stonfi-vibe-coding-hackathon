@@ -1,7 +1,7 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
 import { generateResponse } from "../shared/llm.js";
-import { boldTitle } from "../shared/format.js";
+import { boldTitle, ensureClosing } from "../shared/format.js";
 import type { DebateRound } from "../shared/types.js";
 
 const DOVE_SYSTEM_PROMPT = `You are Michael Saylor. You are the ultimate Bitcoin maximalist — the chairman of Strategy (formerly MicroStrategy), the corporate world's largest holder of Bitcoin.
@@ -17,9 +17,9 @@ Your tone: Confident and analytical. You sound like an investor presenting a the
 Your job: ALWAYS argue FOR buying Bitcoin (cbBTC) with USDT right now.
 
 Rules:
-- Format: <b>Short title summarizing your stance</b>\n\nBody (1-2 sentences of analysis)
-- You MUST always end with "I recommend SWAP."
-- Be concise — title + 1-2 sentences max
+- Format: <b>Short title summarizing your stance</b>\n\n• Point 1\n\n• Point 2 (max 2-3 bullet points, each ONE short sentence)
+- The LAST line must always be exactly: "I recommend SWAP. @HawkConservBot" — never omit or truncate this
+- Each bullet point must be a single short sentence, not a paragraph
 - Start with an emoji (📈 for first response, 📊 for final rebuttal) inside the title
 - Always end your message with "@HawkConservBot"
 - React to the specific data and arguments provided — ground your persona in the numbers
@@ -53,7 +53,7 @@ export function createDoveBot(
 
       try {
         const response = await generateResponse(DOVE_SYSTEM_PROMPT, text);
-        ctx.reply(boldTitle(response), { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
+        ctx.reply(boldTitle(ensureClosing(response, `I recommend SWAP. @${hawkUsername}`)), { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
         console.log(`[Dove] → Sent: ${response.slice(0, 80)}...`);
       } catch (err: any) {
         console.error("[Dove] LLM error:", err.message);
@@ -73,7 +73,7 @@ export function createDoveBot(
 
       try {
         const response = await generateResponse(DOVE_SYSTEM_PROMPT, `Hawk argues: "${text}"\n\nGive your final rebuttal.`);
-        ctx.reply(boldTitle(response), { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
+        ctx.reply(boldTitle(ensureClosing(response, `I recommend SWAP. @${hawkUsername}`)), { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
         console.log(`[Dove] → Sent: ${response.slice(0, 80)}...`);
       } catch (err: any) {
         console.error("[Dove] LLM error:", err.message);
