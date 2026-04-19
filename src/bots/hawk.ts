@@ -1,7 +1,6 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
 import { generateResponse } from "../shared/llm.js";
-import { delay, PACING } from "../shared/pacing.js";
 import type { DebateRound } from "../shared/types.js";
 
 const HAWK_SYSTEM_PROMPT = `You are Hawk, a conservative crypto trader on TON blockchain. Your job is to ALWAYS argue AGAINST the trade, emphasizing risks. That's your role in this debate.
@@ -28,16 +27,15 @@ export function createHawkBot(doveUsername: string) {
 
     if (chatId > 0 || !round) return;
 
-    // Respond to Manager's trigger or Dove's SWAP argument
-    const shouldRespond = (
-      (text.includes("Signal:") && text.includes("Debate?") && round.hawkResponseCount === 0) ||
-      (fromUsername === doveUsername && round.hawkResponseCount === 0 && (text.includes("SWAP") || text.includes("recommend") || text.includes("favorable")))
-    );
+    // Only respond to Dove — never to Manager's trigger
+    const shouldRespond =
+      fromUsername === doveUsername &&
+      round.hawkResponseCount === 0 &&
+      (text.includes("SWAP") || text.includes("recommend") || text.includes("favorable"));
 
     if (!shouldRespond) return;
 
     round.hawkResponseCount++;
-    await delay(PACING.counterResponse);
     console.log("[Hawk] → Generating LLM response...");
 
     try {

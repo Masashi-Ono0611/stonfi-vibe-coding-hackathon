@@ -1,7 +1,6 @@
 import { Bot } from "grammy";
 import { config } from "../shared/config.js";
 import { generateResponse } from "../shared/llm.js";
-import { delay, PACING } from "../shared/pacing.js";
 import type { DebateRound } from "../shared/types.js";
 
 const DOVE_SYSTEM_PROMPT = `You are Dove, an aggressive crypto trader on TON blockchain. Your job is to ALWAYS argue FOR the trade, even when data looks concerning. That's your role in this debate.
@@ -40,7 +39,6 @@ export function createDoveBot(
       round.doveResponseCount === 0
     ) {
       round.doveResponseCount++;
-      await delay(PACING.firstResponse);
       console.log("[Dove] → Generating 1st LLM response...");
 
       try {
@@ -61,7 +59,6 @@ export function createDoveBot(
       (text.includes("HOLD") || text.includes("risk"))
     ) {
       round.doveResponseCount++;
-      await delay(PACING.finalRebuttal);
       console.log("[Dove] → Generating final LLM response...");
 
       try {
