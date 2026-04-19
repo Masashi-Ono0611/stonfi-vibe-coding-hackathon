@@ -4,26 +4,31 @@
 Two AI bots with opposing risk profiles debate in a Telegram group chat and autonomously decide whether to execute swaps on TON via Omniston.
 
 ## Core Concept
-- **Hawk Bot** (conservative) and **Dove Bot** (aggressive) are deployed via Telegram's Managed Bots
-- They communicate via Telegram's Bot-to-Bot Communication in a shared group chat
-- Omniston streams real-time RFQ data as the trigger for debates
-- When consensus is reached, the swap executes via STON.fi DEX SDK
-- Users observe (or override) the debate in real-time
+- **Hawk Bot** (conservative) and **Dove Bot** (aggressive) debate in a shared group chat via Telegram's Bot-to-Bot Communication
+- A **Manager Bot** monitors Omniston RFQ stream and triggers debates
+- After a fixed-round debate, the Manager announces `SWAP` or `HOLD`
+- Users observe the debate in real-time and can override
 
 ## Architecture
 
 ```
-Omniston RFQ Stream
+Omniston RFQ Stream (or /debate command)
         │
         ▼
-  Manager Bot ──── monitors stream, triggers debate
+  Manager Bot ──── triggers debate, announces decision
         │
         ▼
-  Group Chat: [Hawk] ↔ [Dove]
-        │
-        ├── Consensus → STON.fi SDK → Swap Execution
-        │
-        └── No Consensus → Hold, notify user
+  Group Chat: [Manager] → [Dove] → [Hawk] → [Dove]
+                                        │
+                                        ▼
+                              Manager announces result
+                                        │
+                          ┌─────────────┴─────────────┐
+                          │                           │
+                    SWAP (consensus)             HOLD (no consensus)
+                          │                           │
+                    STON.fi SDK                Log & wait
+                    → execute swap
 ```
 
 ## Components
@@ -32,45 +37,73 @@ Omniston RFQ Stream
 - Subscribes to Omniston RFQ WebSocket stream
 - Monitors asset pairs (e.g., TON/STON, jUSDT/TON)
 - When trigger condition met (price change %, spread %, etc.), posts debate prompt to group
-- Manages Hawk and Dove child bots via Managed Bots API
+- After debate concludes, announces final decision (`SWAP` or `HOLD`)
+- Executes swap via STON.fi DEX SDK on `SWAP` consensus
+- Bot setup: 3 bots created manually via BotFather for MVP (Managed Bots API as future enhancement)
 
 ### 2. Hawk Bot (Conservative)
 - Personality: Risk-averse, focuses on downside protection
-- Decision factors: Slippage tolerance, position size limits, volatility, historical drawdown
+- Decision factors: Slippage tolerance, position size limits, volatility
 - Default stance: "Hold unless evidence is overwhelming"
-- Responds to Dove's arguments with counter-analysis using Omniston RFQ data
+- Receives RFQ data from Manager's trigger, responds with counter-analysis
 
 ### 3. Dove Bot (Aggressive)
 - Personality: Opportunity-seeking, focuses on upside capture
-- Decision factors: RFQ price advantage, spread opportunity, rebalance necessity
+- Decision factors: RFQ price advantage, spread opportunity
 - Default stance: "Execute if RFQ is favorable"
-- Proposes swaps and argues for execution with data from Omniston
+- Receives RFQ data from Manager's trigger, proposes swap with data
+- Delivers final rebuttal after Hawk's counter-argument
 
 ### 4. Debate Protocol (Fixed-Round)
-1. Manager posts trigger: *"Signal: TON/STON spread 2.3%. Debate?"*
-2. Dove responds first (pro/con with data)
-3. Hawk responds (agrees/disagrees with counter-data)
-4. Dove final rebuttal (1 message max)
-5. Decision announced: `SWAP` or `HOLD`
+
+| Round | Speaker | Action |
+|-------|---------|--------|
+| 0 | Manager | Posts trigger with RFQ data: *"Signal: TON/STON spread 2.3%. Debate?"* |
+| 1 | Dove | Responds with SWAP recommendation + data |
+| 2 | Hawk | Counter-argues with HOLD stance + risk data |
+| 3 | Dove | Final rebuttal (SWAP or concedes to HOLD) |
+| 4 | Manager | Announces final decision |
+
+**Termination**: Each bot has a response counter (Hawk: max 1, Dove: max 2). After all rounds complete, no further automatic responses.
+
+**Decision logic**: Manager parses Dove's final message. If Dove says SWAP → `SWAP`. If Dove concedes to HOLD → `HOLD`.
 
 ### 5. Swap Execution
-- On `SWAP` consensus: Build and send transaction via STON.fi DEX SDK
-- On `HOLD`: Log the debate result, wait for next trigger
+- On `SWAP`: Manager builds and sends transaction via STON.fi DEX SDK
+- On `HOLD`: Log the debate, wait for next trigger
 - User override: `/approve` or `/reject` at any time during debate
 
 ## Technical Stack
 - **Omniston SDK**: `@ston-fi/omniston-sdk` — RFQ WebSocket streaming
 - **STON.fi DEX SDK**: `@ston-fi/sdk` — Swap transaction building
-- **Telegram Bot API**: Managed Bots + Bot-to-Bot Communication
+- **Telegram Bot API**: Bot-to-Bot Communication (grammy)
 - **Runtime**: Node.js (bot backend) + optional Mini App (dashboard)
 
+## Feasibility Test Results
+
+| # | Test | Result |
+|---|------|--------|
+| 1 | Bot receives other bot's message in group | Dove←Hawk ✅, Hawk←Dove ✅ |
+| 2 | Reply received by target bot | Hawk→Dove ✅, Dove→Hawk ✅ |
+| 3 | Full debate completes in <10s | ~2s ✅ |
+| 4 | Loop prevention (terminates after N rounds) | Hawk 1 resp, Dove 2 resp ✅ |
+
+See [`feasibility-test/SPEC.md`](../feasibility-test/SPEC.md) for full test specification.
+
 ## User Experience
-1. User opens Manager Bot, connects wallet (TON Connect)
+1. User opens Manager Bot in Telegram
 2. User configures: asset pair, trigger thresholds, risk limits
-3. Manager creates/deployes Hawk & Dove bots in a dedicated group
-4. User watches debates happen in real-time in the group chat
-5. Swaps execute automatically (or user overrides)
+3. Manager Bot adds user to a dedicated group with Hawk & Dove
+4. Omniston RFQ triggers a debate (or user sends `/debate` for demo)
+5. User watches debate unfold in real-time
+6. Manager announces decision, swap executes on consensus
 
 ## Hackathon Scope
-- MVP: 2 bots (Hawk & Dove) + Manager + Omniston RFQ stream + 1 swap pair
-- Out of scope: Smart contracts, cross-chain, Multi-asset portfolio, complex strategies
+- MVP: 3 bots (Manager, Hawk, Dove) + Omniston RFQ stream + 1 swap pair
+- Out of scope: Smart contracts, cross-chain, multi-asset portfolio, Managed Bots API, Mini App dashboard
+
+## Next Steps
+1. Integrate Omniston RFQ stream as trigger (replace `/debate` command)
+2. Add LLM prompts for natural language debate (replace template responses)
+3. Add Manager decision announcement after debate concludes
+4. Connect STON.fi DEX SDK for swap execution on consensus
