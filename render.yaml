@@ -1,0 +1,21 @@
+services:
+  # Environment variables
+  - type: web
+    name: hawk-dove-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: HAWK_BOT_TOKEN
+        sync: false
+      - key: DOVE_BOT_TOKEN
+        sync: false
+      - key: MANAGER_BOT_TOKEN
+        sync: false
+      - key: PRIVY_APP_ID
+        sync: false
+      - key: GROUP_CHAT_ID
+        sync: false
