@@ -16,12 +16,12 @@ export function createManagerBot(callbacks: DebateCallbacks) {
   function buildTriggerMessage(data?: QuoteData): string {
     if (data) {
       return [
-        `📊 Signal: TON/STON — ${data.bidUnits} TON → ${data.askUnits} STON`,
+        `📊 Signal: USDT/cbBTC — ${data.bidUnits} USDT → ${data.askUnits} cbBTC`,
         `   Price: ${data.price} | Resolver: ${data.resolverName} | Gas: ${data.gasBudget} TON`,
         "   Debate?",
       ].join("\n");
     }
-    return "📊 Signal: TON/STON — monitoring active. Debate?";
+    return "📊 Signal: USDT/cbBTC — monitoring active. Debate?";
   }
 
   async function announceDecision(chatId: number, doveResponseCount: number) {

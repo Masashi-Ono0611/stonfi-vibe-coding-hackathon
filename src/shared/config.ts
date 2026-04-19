@@ -9,9 +9,9 @@ export const config = {
   },
   omniston: {
     wsUrl: process.env.OMNISTON_WS_URL || "wss://omni-ws.ston.fi",
-    tonAddress: process.env.TON_ADDRESS || "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c",
-    stonAddress: process.env.STON_ADDRESS || "EQA2kCVNwVsil2EM2mB0SkXytxCqQjS4mttjDpnXmwG9T6bO",
-    swapAmount: process.env.SWAP_AMOUNT || "1000000000",
+    usdtAddress: process.env.USDT_ADDRESS || "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+    cbbtcAddress: process.env.CBBTC_ADDRESS || "EQDhyPzbIjJT_WnY3gGprjSYUK9fiGMjWMezxO8MZiUdfb_B",
+    swapAmount: process.env.SWAP_AMOUNT || "10000000",
   },
   llm: {
     baseUrl: process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com",
