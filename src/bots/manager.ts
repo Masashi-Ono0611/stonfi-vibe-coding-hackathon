@@ -1,6 +1,8 @@
 import { Bot } from "grammy";
+import { InputFile } from "grammy";
 import { config } from "../shared/config.js";
 import { buildSwapDeepLink } from "../omniston/swap.js";
+import { renderBuySignal } from "../shared/render.js";
 import type { QuoteData } from "../shared/types.js";
 
 interface DebateCallbacks {
@@ -28,15 +30,28 @@ export function createManagerBot(callbacks: DebateCallbacks) {
     await new Promise((r) => setTimeout(r, 2000));
     if (!debateActive) return;
     if (doveResponseCount >= 2) {
+      const quote = callbacks.getLatestQuote();
       const swapLink = buildSwapDeepLink();
-      await bot.api.sendMessage(chatId, [
-        "✅ Decision: SWAP (Dove's final stance)",
-        "",
-        "🔗 Execute Swap",
-        swapLink,
-        "",
-        "Click to open STON.fi and sign with your wallet.",
-      ].join("\n"));
+      if (quote) {
+        const image = await renderBuySignal(quote);
+        await bot.api.sendPhoto(chatId, new InputFile(image), {
+          caption: [
+            "✅ Decision: SWAP",
+            "",
+            `1 cbBTC = $${quote.price}`,
+            "",
+            "🔗 Execute Swap",
+            swapLink,
+          ].join("\n"),
+        });
+      } else {
+        await bot.api.sendMessage(chatId, [
+          "✅ Decision: SWAP",
+          "",
+          "🔗 Execute Swap",
+          swapLink,
+        ].join("\n"));
+      }
     } else {
       await bot.api.sendMessage(chatId, "⏸ Decision: HOLD (insufficient debate)");
     }
