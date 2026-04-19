@@ -7,8 +7,12 @@ let lastQuoteId: string | null = null;
 let monitoring = false;
 let latestQuote: QuoteData | null = null;
 
-function formatTon(units: string): string {
-  return (Number(units) / 1e9).toFixed(2);
+function formatUsdt(units: string): string {
+  return (Number(units) / 1e6).toFixed(2);
+}
+
+function formatCbbtc(units: string): string {
+  return (Number(units) / 1e8).toFixed(8);
 }
 
 export function getLatestQuote(): QuoteData | null {
@@ -27,11 +31,11 @@ export function startMonitoring() {
     const rfq = {
       bidAssetAddress: {
         blockchain: 607, // TON SLIP-044
-        address: config.omniston.tonAddress,
+        address: config.omniston.usdtAddress,
       },
       askAssetAddress: {
         blockchain: 607, // TON SLIP-044
-        address: config.omniston.stonAddress,
+        address: config.omniston.cbbtcAddress,
       },
       amount: {
         bidUnits: config.omniston.swapAmount,
@@ -61,20 +65,20 @@ export function startMonitoring() {
           if (q.quoteId === lastQuoteId) return;
           lastQuoteId = q.quoteId;
 
-          const bidNum = Number(q.bidUnits);
-          const askNum = Number(q.askUnits);
-          const price = askNum / bidNum;
+          const bidUsdt = Number(q.bidUnits) / 1e6;
+          const askBtc = Number(q.askUnits) / 1e8;
+          const priceUsdtPerBtc = bidUsdt / askBtc;
 
           latestQuote = {
-            bidUnits: formatTon(q.bidUnits),
-            askUnits: formatTon(q.askUnits),
-            price: price.toFixed(6),
+            bidUnits: formatUsdt(q.bidUnits),
+            askUnits: formatCbbtc(q.askUnits),
+            price: priceUsdtPerBtc.toFixed(2),
             resolverName: q.resolverName || "unknown",
             gasBudget: q.gasBudget ? String(Number(q.gasBudget) / 1e9) : "N/A",
           };
 
           console.log(
-            `[RFQ] Quote: ${formatTon(q.bidUnits)} TON → ${formatTon(q.askUnits)} STON (price: ${latestQuote.price}, ${q.resolverName})`
+            `[RFQ] Quote: ${formatUsdt(q.bidUnits)} USDT → ${formatCbbtc(q.askUnits)} cbBTC (1 cbBTC = $${latestQuote.price}, ${q.resolverName})`
           );
         }
       },

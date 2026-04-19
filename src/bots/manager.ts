@@ -1,6 +1,8 @@
 import { Bot } from "grammy";
+import { InputFile } from "grammy";
 import { config } from "../shared/config.js";
 import { buildSwapDeepLink } from "../omniston/swap.js";
+import { renderBuySignal } from "../shared/render.js";
 import type { QuoteData } from "../shared/types.js";
 
 interface DebateCallbacks {
@@ -16,27 +18,40 @@ export function createManagerBot(callbacks: DebateCallbacks) {
   function buildTriggerMessage(data?: QuoteData): string {
     if (data) {
       return [
-        `📊 Signal: TON/STON — ${data.bidUnits} TON → ${data.askUnits} STON`,
-        `   Price: ${data.price} | Resolver: ${data.resolverName} | Gas: ${data.gasBudget} TON`,
+        `📊 Signal: USDT/cbBTC — ${data.bidUnits} USDT → ${data.askUnits} cbBTC`,
+        `   1 cbBTC = $${data.price} | Resolver: ${data.resolverName}`,
         "   Debate?",
       ].join("\n");
     }
-    return "📊 Signal: TON/STON — monitoring active. Debate?";
+    return "📊 Signal: USDT/cbBTC — monitoring active. Debate?";
   }
 
   async function announceDecision(chatId: number, doveResponseCount: number) {
     await new Promise((r) => setTimeout(r, 2000));
     if (!debateActive) return;
     if (doveResponseCount >= 2) {
+      const quote = callbacks.getLatestQuote();
       const swapLink = buildSwapDeepLink();
-      await bot.api.sendMessage(chatId, [
-        "✅ Decision: SWAP (Dove's final stance)",
-        "",
-        "🔗 Execute Swap",
-        swapLink,
-        "",
-        "Click to open STON.fi and sign with your wallet.",
-      ].join("\n"));
+      if (quote) {
+        const image = await renderBuySignal(quote);
+        await bot.api.sendPhoto(chatId, new InputFile(image), {
+          caption: [
+            "✅ Decision: SWAP",
+            "",
+            `1 cbBTC = $${quote.price}`,
+            "",
+            "🔗 Execute Swap",
+            swapLink,
+          ].join("\n"),
+        });
+      } else {
+        await bot.api.sendMessage(chatId, [
+          "✅ Decision: SWAP",
+          "",
+          "🔗 Execute Swap",
+          swapLink,
+        ].join("\n"));
+      }
     } else {
       await bot.api.sendMessage(chatId, "⏸ Decision: HOLD (insufficient debate)");
     }
