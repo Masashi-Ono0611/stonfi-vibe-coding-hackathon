@@ -1,24 +1,81 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { usePrivy, useLogin, useLogout } from '@privy-io/react-auth';
 import { useCreateWallet, useSignRawHash } from '@privy-io/react-auth/extended-chains';
+import { TonConnectButton, TonConnectUIProvider, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { SwapWidget } from '@/components/swap-widget';
+import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
+import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
 
-function WalletSection() {
+type ConnectionMethod = 'privy' | 'tonconnect';
+
+function ConnectionSelector({
+  selected,
+  onSelect
+}: {
+  selected: ConnectionMethod;
+  onSelect: (method: ConnectionMethod) => void;
+}) {
+  return (
+    <div className="flex gap-2 mb-6">
+      <button
+        onClick={() => onSelect('privy')}
+        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+          selected === 'privy'
+            ? 'bg-[#0071f0] text-white'
+            : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
+        }`}
+      >
+        Privy
+      </button>
+      <button
+        onClick={() => onSelect('tonconnect')}
+        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+          selected === 'tonconnect'
+            ? 'bg-[#0088cc] text-white'
+            : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
+        }`}
+      >
+        TON Connect
+      </button>
+    </div>
+  );
+}
+
+function PrivyWalletSection({
+  onWalletReady
+}: {
+  onWalletReady: (wallet: { address: string; publicKey: string }) => void;
+}) {
   const { user, authenticated } = usePrivy();
   const { login } = useLogin();
   const { logout } = useLogout();
   const { createWallet } = useCreateWallet();
 
+  useEffect(() => {
+    // Check if already has TON wallet
+    const tonWallets = user?.linkedAccounts?.filter(
+      (a) => a.type === 'wallet' && a.chainType === 'ton'
+    );
+    const tonWallet = tonWallets?.[0] as { address?: string; publicKey?: string } | undefined;
+    if (tonWallet?.address && tonWallet?.publicKey) {
+      onWalletReady({
+        address: tonWallet.address,
+        publicKey: tonWallet.publicKey
+      });
+    }
+  }, [user, onWalletReady]);
+
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm">Login to manage your embedded wallet</p>
+        <p className="text-[#8d8d8d] text-sm">Login with Privy to manage your embedded wallet</p>
         <button
           onClick={login}
           className="px-6 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-lg font-medium transition-colors"
         >
-          Login
+          Login with Privy
         </button>
       </div>
     );
@@ -60,9 +117,9 @@ function WalletSection() {
         </button>
       </div>
 
-      {tonWallet?.address ? (
+      {tonWallet?.address && tonWallet?.publicKey ? (
         <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
-          <p className="text-xs text-[#8d8d8d] mb-1">TON Wallet</p>
+          <p className="text-xs text-[#8d8d8d] mb-1">Privy TON Wallet</p>
           <p className="text-sm font-mono text-[#0071f0] break-all">
             {tonWallet.address}
           </p>
@@ -79,46 +136,129 @@ function WalletSection() {
   );
 }
 
+function TonConnectWalletSection({
+  onWalletReady
+}: {
+  onWalletReady: (wallet: { address: string }) => void;
+}) {
+  const { wallet, address, connected } = useTonWallet();
+
+  useEffect(() => {
+    if (connected && address) {
+      onWalletReady({ address });
+    }
+  }, [connected, address, onWalletReady]);
+
+  if (!connected || !address) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8">
+        <p className="text-[#8d8d8d] text-sm">Connect your TON wallet with TON Connect</p>
+        <TonConnectButton className="!bg-[#0088cc] hover:!bg-[#0066aa]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 py-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#0088cc] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            TC
+          </div>
+          <div>
+            <p className="text-sm font-medium text-[#202020]">TON Connect</p>
+            <p className="text-xs text-[#8d8d8d]">{address.slice(0, 6)}...{address.slice(-4)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
+        <p className="text-xs text-[#8d8d8d] mb-1">TON Connect Wallet</p>
+        <p className="text-sm font-mono text-[#0088cc] break-all">
+          {address}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
+  const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('privy');
   const { authenticated, user } = usePrivy();
   const { signRawHash } = useSignRawHash();
+  const { wallet: tcWallet, address: tcAddress } = useTonWallet();
 
-  const tonWallets = user?.linkedAccounts?.filter(
-    (a) => a.type === 'wallet' && a.chainType === 'ton'
-  );
+  const [walletInfo, setWalletInfo] = useState<{
+    address: string;
+    publicKey?: string;
+    adapter: PrivyTonConnectAdapter | TonConnectAdapter;
+  } | null>(null);
 
-  const tonWallet = tonWallets?.[0] as { address?: string; publicKey?: string } | undefined;
+  // Handle wallet ready callback
+  const handleWalletReady = (wallet: { address: string; publicKey?: string }) => {
+    if (connectionMethod === 'privy') {
+      const adapter = new PrivyTonConnectAdapter();
+      // Note: We'll initialize the adapter when SwapWidget mounts
+      setWalletInfo({
+        address: wallet.address,
+        publicKey: wallet.publicKey,
+        adapter: adapter as any,
+      });
+    } else {
+      const adapter = new TonConnectAdapter();
+      adapter.connect(tcWallet!);
+      setWalletInfo({
+        address: wallet.address,
+        adapter: adapter as any,
+      });
+    }
+  };
+
+  const hasWallet = !!walletInfo;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
-      <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
-        <div className="max-w-lg mx-auto flex items-center gap-2">
-          <span className="text-lg">🦅</span>
-          <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove Trading Council</h1>
-        </div>
-      </header>
+    <TonConnectUIProvider>
+      <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
+        <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
+          <div className="max-w-lg mx-auto flex items-center gap-2">
+            <span className="text-lg">🦅</span>
+            <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove Trading Council</h1>
+          </div>
+        </header>
 
-      <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
-        <section>
-          <WalletSection />
-        </section>
-
-        {authenticated && tonWallet?.address && (
+        <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
           <section>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm">🔄</span>
-              <h2 className="text-sm font-semibold text-[#202020]">Swap</h2>
-            </div>
-            <SwapWidget
-              walletAddress={tonWallet.address}
-              publicKey={tonWallet.publicKey || ''}
-              signRawHash={signRawHash}
+            <ConnectionSelector
+              selected={connectionMethod}
+              onSelect={setConnectionMethod}
             />
           </section>
-        )}
-      </main>
-    </div>
+
+          <section>
+            {connectionMethod === 'privy' ? (
+              <PrivyWalletSection onWalletReady={handleWalletReady} />
+            ) : (
+              <TonConnectWalletSection onWalletReady={handleWalletReady} />
+            )}
+          </section>
+
+          {hasWallet && walletInfo && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm">🔄</span>
+                <h2 className="text-sm font-semibold text-[#202020]">Swap</h2>
+              </div>
+              <SwapWidget
+                walletAddress={walletInfo.address}
+                publicKey={walletInfo.publicKey || ''}
+                signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
+              />
+            </section>
+          )}
+        </main>
+      </div>
+    </TonConnectUIProvider>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import omnistonWidgetLoader from '@ston-fi/omniston-widget-loader';
 import type { OmnistonWidget } from '@ston-fi/omniston-widget-loader';
 import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
+import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
 
 type SignRawHashFunction = (params: {
   address: string;
@@ -11,76 +12,58 @@ type SignRawHashFunction = (params: {
   hash: `0x${string}`;
 }) => Promise<{ signature: string }>;
 
+interface Adapter {
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+}
+
 interface SwapWidgetProps {
   walletAddress?: string;
   publicKey?: string;
-  signRawHash: SignRawHashFunction;
+  signRawHash?: SignRawHashFunction;
 }
 
 export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<OmnistonWidget | null>(null);
-  const adapterRef = useRef<PrivyTonConnectAdapter | null>(null);
+  const adapterRef = useRef<Adapter | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || !walletAddress) return;
 
-    if (!publicKey) {
-      let isMounted = true;
-
-      omnistonWidgetLoader.load().then((WidgetConstructor) => {
-        if (!isMounted || !containerRef.current) return;
-
-        widgetRef.current = new WidgetConstructor({
-          tonconnect: {
-            type: 'standalone',
-            options: {
-              manifestUrl: `${window.location.origin}/tonconnect-manifest.json`,
-            },
-          },
-          widget: {
-            defaultBidAsset: 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
-            defaultAskAsset: 'EQA2kCVNwVsil2EM2mB0SkXytxCqQjS4mttjDpnXmwG9T6bO',
-          },
-        });
-
-        widgetRef.current.mount(containerRef.current);
-      });
-
-      return () => {
-        isMounted = false;
-        widgetRef.current?.unmount();
-        widgetRef.current = null;
-      };
-    }
-
-    let isMounted = true;
-
     const initializeWidget = async () => {
       try {
-        const adapter = new PrivyTonConnectAdapter();
+        let adapter: Adapter;
 
-        await adapter.connect(
-          walletAddress,
-          publicKey,
-          async (data: string) => {
-            const result = await signRawHash({
-              address: walletAddress,
-              chainType: 'ton',
-              hash: `0x${data}` as const,
-            });
-            if (result.signature) {
-              return Buffer.from(result.signature, 'hex');
+        if (publicKey && signRawHash) {
+          // Use Privy adapter
+          const privyAdapter = new PrivyTonConnectAdapter();
+
+          await privyAdapter.connect(
+            walletAddress,
+            publicKey,
+            async (data: string) => {
+              const result = await signRawHash({
+                address: walletAddress,
+                chainType: 'ton',
+                hash: `0x${data}` as const,
+              });
+              if (result.signature) {
+                return Buffer.from(result.signature, 'hex');
+              }
+              throw new Error('Failed to sign transaction');
             }
-            throw new Error('Failed to sign transaction');
-          }
-        );
+          );
+
+          adapter = privyAdapter;
+        } else {
+          // Use TON Connect adapter (will be initialized by page.tsx)
+          adapter = new TonConnectAdapter();
+        }
 
         adapterRef.current = adapter;
 
         const WidgetConstructor = await omnistonWidgetLoader.load();
-
-        if (!isMounted || !containerRef.current) return;
 
         widgetRef.current = new WidgetConstructor({
           tonconnect: {
@@ -102,7 +85,6 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
     initializeWidget();
 
     return () => {
-      isMounted = false;
       widgetRef.current?.unmount();
       widgetRef.current = null;
       adapterRef.current?.disconnect();

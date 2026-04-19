@@ -11,6 +11,7 @@
   "dependencies": {
     "@privy-io/react-auth": "^3.22.1",
     "@ston-fi/omniston-widget-loader": "^0.2.0",
+    "@tonconnect/ui-react": "^2.4.4",
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.2.4",
     "@twa-dev/sdk": "^8.0.2",
@@ -18,6 +19,7 @@
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "tonweb": "^0.0.66",
     "viem": "^2.47.4"
   },
   "devDependencies": {
