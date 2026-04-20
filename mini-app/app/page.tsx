@@ -408,8 +408,8 @@ export default function Home() {
 
       {/* メイン */}
       <main className="flex-1 flex flex-col gap-4 max-w-lg mx-auto w-full px-4 py-6">
-        {/* TGカード: 未接続時のみ表示 */}
-        {!hasWallet && <WelcomeCard />}
+        {/* TGカード: 常時表示 */}
+        <WelcomeCard />
 
         {/* ウォレット接続カード */}
         <div className="bg-white rounded-xl border border-[#e8e8e8] p-4">
