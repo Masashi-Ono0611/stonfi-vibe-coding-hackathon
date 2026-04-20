@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hawk & Dove Trading Council",
+  title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
   description: "TON/STON swap Mini App powered by STON.fi Omniston Widget",
 };
 

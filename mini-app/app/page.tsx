@@ -303,7 +303,7 @@ export default function Home() {
       <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <span className="text-lg">🦅</span>
-          <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove Trading Council</h1>
+          <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove</h1>
         </div>
       </header>
 
