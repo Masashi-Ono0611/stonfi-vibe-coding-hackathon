@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePrivy, useLogin, useLogout } from '@privy-io/react-auth';
 import { useCreateWallet, useSignRawHash } from '@privy-io/react-auth/extended-chains';
-import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
+import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { SwapWidget } from '@/components/swap-widget';
 import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
 import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
@@ -230,7 +230,12 @@ function TonConnectWalletSection({
         <p className="text-[#8d8d8d] text-sm text-center">
           Connect Tonkeeper or any TON-compatible wallet.
         </p>
-        <TonConnectButton className="!bg-[#0088cc] hover:!bg-[#0066aa]" />
+        <button
+          onClick={() => tonConnectUI?.openModal()}
+          className="px-6 py-3 bg-[#0088cc] hover:bg-[#0066aa] text-white rounded-lg font-medium transition-colors"
+        >
+          Connect Wallet
+        </button>
       </div>
     );
   }
