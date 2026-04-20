@@ -74,8 +74,8 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
 
         const config: any = {
           widget: {
-            defaultBidAsset: 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
-            defaultAskAsset: 'EQA2kCVNwVsil2EM2mB0SkXytxCqQjS4mttjDpnXmwG9T6bO',
+            defaultBidAsset: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs', // USDT (from config.ts)
+            defaultAskAsset: 'EQDhyPzbIjJT_WnY3gGprjSYUK9fiGMjWMezxO8MZiUdfb_B', // cbBTC (from config.ts)
           },
         };
 
