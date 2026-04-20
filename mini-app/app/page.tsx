@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePrivy, useLogin, useLogout } from '@privy-io/react-auth';
 import { useCreateWallet, useSignRawHash } from '@privy-io/react-auth/extended-chains';
-import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
+import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { SwapWidget } from '@/components/swap-widget';
 import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
 import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
@@ -139,15 +139,19 @@ function PrivyWalletSection({
 function TonConnectWalletSection({
   onWalletReady
 }: {
-  onWalletReady: (wallet: { address: string }) => void;
+  onWalletReady: (wallet: { address: string }, tcWallet?: any) => void;
 }) {
-  const { wallet, address, connected } = useTonWallet();
+  const wallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
+
+  const address = wallet?.account?.address;
+  const connected = !!wallet;
 
   useEffect(() => {
     if (connected && address) {
-      onWalletReady({ address });
+      onWalletReady({ address }, wallet);
     }
-  }, [connected, address, onWalletReady]);
+  }, [connected, address, onWalletReady, wallet]);
 
   if (!connected || !address) {
     return (
