@@ -81,10 +81,10 @@ Visit `http://localhost:3000`
 
 ## 📱 Mini App Features
 
-- **Dual Wallet Support**: Privy (embedded wallet) & TON Connect
-- **Omniston Widget**: StonFiのDEXスワップ
-- **Real-time Swap**: USDT → cbBTC
-- **Default Amount**: 1 USDT preset
+- **Independent Wallet Management**: Privy (embedded wallet) & TON Connect managed separately
+- **Header Wallet Status**: Real-time connection state shown as pill buttons in the top-right
+- **Omniston Widget**: StonFi DEX swap (USDT → cbBTC)
+- **Telegram Debate Room Link**: Persistent link to the live agent debate channel
 
 ## 🤖 Debate Protocol
 
