@@ -137,15 +137,22 @@ function PrivyWalletSection({
 }
 
 function TonConnectWalletSection({
-  onWalletReady
+  onWalletReady,
+  onDisconnect
 }: {
   onWalletReady: (wallet: { address: string }, tcWallet?: any) => void;
+  onDisconnect: () => void;
 }) {
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
 
   const address = wallet?.account?.address;
   const connected = !!wallet;
+
+  const handleDisconnect = async () => {
+    await tonConnectUI?.disconnect();
+    onDisconnect();
+  };
 
   useEffect(() => {
     if (connected && address) {
@@ -174,6 +181,12 @@ function TonConnectWalletSection({
             <p className="text-xs text-[#8d8d8d]">{address.slice(0, 6)}...{address.slice(-4)}</p>
           </div>
         </div>
+        <button
+          onClick={handleDisconnect}
+          className="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
+        >
+          Disconnect
+        </button>
       </div>
 
       <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
@@ -219,6 +232,11 @@ export default function Home() {
     }
   };
 
+  // Handle wallet disconnect
+  const handleDisconnect = () => {
+    setWalletInfo(null);
+  };
+
   const hasWallet = !!walletInfo;
 
   return (
@@ -242,7 +260,10 @@ export default function Home() {
           {connectionMethod === 'privy' ? (
             <PrivyWalletSection onWalletReady={handleWalletReady} />
           ) : (
-            <TonConnectWalletSection onWalletReady={handleWalletReady} />
+            <TonConnectWalletSection
+              onWalletReady={handleWalletReady}
+              onDisconnect={handleDisconnect}
+            />
           )}
         </section>
 
