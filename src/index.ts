@@ -8,7 +8,7 @@ const DOVE_USERNAME = "DoveAggressBot";
 const MANAGER_USERNAME = "HawkDoveManagerBot";
 
 async function main() {
-  console.log("=== Hawk & Dove — Two-Bot Trading Council ===\n");
+  console.log("=== Hawk & Dove — Moltbook-style Agents Debate, Then Swap ===\n");
 
   const hawk = createHawkBot(DOVE_USERNAME);
   const dove = createDoveBot(HAWK_USERNAME, MANAGER_USERNAME, (chatId, count) => {

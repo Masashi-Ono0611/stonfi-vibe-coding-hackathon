@@ -1,4 +1,4 @@
-# Hawk & Dove — Two-Bot Trading Council
+# Hawk & Dove — Moltbook-style Agents Debate, Then Swap
 
 ## One-Liner
 Two AI bots with opposing risk profiles debate in a Telegram group chat and autonomously decide whether to execute swaps on TON via Omniston.

@@ -8,7 +8,7 @@ const client = new Anthropic({
 
 export async function generateResponse(systemPrompt: string, userMessage: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5",
     max_tokens: 150,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
