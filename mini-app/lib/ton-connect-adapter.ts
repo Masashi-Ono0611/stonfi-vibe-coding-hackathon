@@ -1,6 +1,4 @@
-import { Address, beginCell, Cell, TonClient, WalletContractV4 } from '@ton/ton';
-import { useTonWallet } from '@tonconnect/ui-react';
-import type { IChain } from '@ton/ton';
+import { Address, Cell } from '@ton/ton';
 import type { WalletInfoWithOpenMethod } from '@tonconnect/ui-react';
 
 type Wallet = {
@@ -37,31 +35,19 @@ export class TonConnectAdapter {
   private _wallet: WalletInfoWithOpenMethod | null = null;
   private _listeners: Array<(wallet: Wallet | null) => void> = [];
   private _errorListeners: Array<(err: Error) => void> = [];
-  private _address: Address | null = null;
-  private _publicKey: Buffer | null = null;
-  private _client: TonClient;
-
-  constructor() {
-    this._client = new TonClient({
-      endpoint: 'https://toncenter.com/api/v2/jsonRPC',
-    });
-  }
 
   async connect(walletInfo: WalletInfoWithOpenMethod) {
-    if (!walletInfo.account.address) {
-      throw new Error('Address is required');
-    }
-
     this._wallet = walletInfo;
+    this._notifyListeners();
+  }
 
-    // For TON Connect, we don't have direct access to public key
-    // We'll use the wallet's sendTransaction method directly
-    this._address = Address.parse(walletInfo.account.address);
+  get wallet(): Wallet | null {
+    if (!this._wallet) return null;
 
-    this._wallet = {
+    return {
       account: {
-        address: `0:${this._address.hash.toString('hex')}`,
-        chain: -1,
+        address: this._wallet.account.address,
+        chain: this._wallet.account.chain || -1,
         walletStateInit: '',
       },
       device: {
@@ -71,17 +57,12 @@ export class TonConnectAdapter {
         features: [{ name: 'SendTransaction', maxMessages: 4 }],
         platform: 'browser',
       },
-      provider: 'injected',
+      provider: 'http',
     };
-    this._notifyListeners();
-  }
-
-  get wallet(): Wallet | null {
-    return this._wallet;
   }
 
   get connectionRestored(): Promise<boolean> {
-    return Promise.resolve(!!this._wallet);
+    return Promise.resolve(this._wallet !== null);
   }
 
   get modal() {
@@ -108,8 +89,6 @@ export class TonConnectAdapter {
 
   async disconnect(): Promise<void> {
     this._wallet = null;
-    this._address = null;
-    this._publicKey = null;
     this._notifyListeners();
   }
 
@@ -119,21 +98,18 @@ export class TonConnectAdapter {
     }
 
     // Use TON Connect's sendTransaction method
-    if (!this._wallet.sendTransaction) {
-      throw new Error('sendTransaction not available on wallet');
-    }
-
     try {
       // Convert the transaction request to TON Connect format
       const messages = txReq.messages.map((msg) => ({
         address: msg.address,
         amount: msg.amount,
-        payload: msg.payload ? Cell.fromBase64(msg.payload).toBoc().toString('base64') : '',
+        payload: msg.payload ? Cell.fromBase64(msg.payload).toBoc().toString('base64') : undefined,
+        stateInit: msg.stateInit ? Cell.fromBase64(msg.stateInit).toBoc().toString('base64') : undefined,
       }));
 
       const result = await this._wallet.sendTransaction({
         validUntil: txReq.validUntil,
-        network: txReq.network || -1,
+        network: txReq.network,
         from: txReq.from,
         messages,
       });
@@ -147,9 +123,10 @@ export class TonConnectAdapter {
   }
 
   private _notifyListeners() {
+    const wallet = this.wallet;
     for (const l of this._listeners) {
       try {
-        l(this._wallet);
+        l(wallet);
       } catch (_) {}
     }
   }

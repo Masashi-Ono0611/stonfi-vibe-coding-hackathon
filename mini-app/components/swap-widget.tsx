@@ -32,9 +32,11 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
   useEffect(() => {
     if (!containerRef.current || !walletAddress) return;
 
+    let isMounted = true;
+
     const initializeWidget = async () => {
       try {
-        let adapter: Adapter;
+        let adapter: Adapter | null = null;
 
         if (publicKey && signRawHash) {
           // Use Privy adapter
@@ -62,10 +64,9 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
           const tcAdapter = new TonConnectAdapter();
           await tcAdapter.connect(tcWallet);
           adapter = tcAdapter;
-        } else {
-          // No adapter available, show standalone widget
-          adapter = null as any;
         }
+
+        if (!isMounted || !containerRef.current) return;
 
         adapterRef.current = adapter;
 
@@ -93,6 +94,8 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
           };
         }
 
+        if (!isMounted || !containerRef.current) return;
+
         widgetRef.current = new WidgetConstructor(config);
         widgetRef.current.mount(containerRef.current);
       } catch (error) {
@@ -103,6 +106,7 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
     initializeWidget();
 
     return () => {
+      isMounted = false;
       widgetRef.current?.unmount();
       widgetRef.current = null;
       adapterRef.current?.disconnect();
