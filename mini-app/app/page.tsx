@@ -8,8 +8,20 @@ import { SwapWidget } from '@/components/swap-widget';
 import { PrivyTonConnectAdapter } from '@/lib/privy-ton-adapter';
 import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
 
-type ConnectionMethod = 'privy' | 'tonconnect';
+// ─── 型定義 ───────────────────────────────────────────────
+type PrivyWalletInfo = {
+  address: string;
+  publicKey: string;
+  adapter: PrivyTonConnectAdapter;
+};
+type TcWalletInfo = {
+  address: string;
+  adapter: TonConnectAdapter;
+  rawWallet: any;
+};
+type ActiveWallet = 'privy' | 'tonconnect';
 
+// ─── ユーティリティ ───────────────────────────────────────
 function TelegramIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -18,39 +30,39 @@ function TelegramIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-function HeaderWalletStatus({
-  hasWallet,
-  walletInfo,
-  connectionMethod,
-  onPrivyLogout,
-  onDisconnect,
-  onConnectClick,
+// ─── ヘッダーウォレットボタン ─────────────────────────────
+function WalletPill({
+  label,
+  color,
+  address,
+  onConnect,
+  onAction,
+  actionLabel,
 }: {
-  hasWallet: boolean;
-  walletInfo: { address: string } | null;
-  connectionMethod: ConnectionMethod;
-  onPrivyLogout: () => Promise<void>;
-  onDisconnect: () => Promise<void>;
-  onConnectClick: () => void;
+  label: string;
+  color: string;
+  address?: string;
+  onConnect: () => void;
+  onAction: () => void;
+  actionLabel: string;
 }) {
   const [open, setOpen] = useState(false);
+  const connected = !!address;
+  const shortAddr = address
+    ? `${address.slice(0, 4)}...${address.slice(-4)}`
+    : '';
 
-  if (!hasWallet) {
+  if (!connected) {
     return (
       <button
-        onClick={onConnectClick}
-        className="text-xs px-3 py-1.5 rounded-full border border-[#e8e8e8] text-[#8d8d8d] bg-white hover:border-[#0071f0] hover:text-[#0071f0] transition-colors cursor-pointer"
+        onClick={onConnect}
+        className="text-xs px-3 py-1.5 rounded-full border border-[#e8e8e8] text-[#8d8d8d] bg-white hover:border-current hover:text-current transition-colors cursor-pointer"
+        style={{ ['--tw-ring-color' as any]: color }}
       >
-        Connect Wallet
+        {label}
       </button>
     );
   }
-
-  const isPrivy = connectionMethod === 'privy';
-  const color = isPrivy ? '#0071f0' : '#0088cc';
-  const label = isPrivy ? 'P' : 'TC';
-  const addr = walletInfo?.address ?? '';
-  const shortAddr = addr.length > 8 ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : addr;
 
   return (
     <div className="relative">
@@ -61,8 +73,8 @@ function HeaderWalletStatus({
       >
         <span>{label}</span>
         <span className="font-mono opacity-90">{shortAddr}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" className="opacity-70">
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 3.5l3 3 3-3"/>
         </svg>
       </button>
       {open && (
@@ -70,13 +82,10 @@ function HeaderWalletStatus({
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-9 bg-white border border-[#e8e8e8] rounded-lg shadow-md py-1 min-w-[130px] z-20">
             <button
-              onClick={() => {
-                setOpen(false);
-                isPrivy ? onPrivyLogout() : onDisconnect();
-              }}
+              onClick={() => { setOpen(false); onAction(); }}
               className="w-full text-left text-xs px-4 py-2 text-[#202020] hover:bg-[#f4f4f4] transition-colors"
             >
-              {isPrivy ? 'Logout' : 'Disconnect'}
+              {actionLabel}
             </button>
           </div>
         </>
@@ -85,6 +94,7 @@ function HeaderWalletStatus({
   );
 }
 
+// ─── TGカード ─────────────────────────────────────────────
 function WelcomeCard() {
   return (
     <a
@@ -113,68 +123,31 @@ function WelcomeCard() {
   );
 }
 
-function ConnectionSelector({
-  selected,
-  onSelect
-}: {
-  selected: ConnectionMethod;
-  onSelect: (method: ConnectionMethod) => void;
-}) {
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => onSelect('privy')}
-        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-          selected === 'privy'
-            ? 'bg-[#0071f0] text-white'
-            : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
-        }`}
-      >
-        Privy
-      </button>
-      <button
-        onClick={() => onSelect('tonconnect')}
-        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-          selected === 'tonconnect'
-            ? 'bg-[#0088cc] text-white'
-            : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
-        }`}
-      >
-        TON Connect
-      </button>
-    </div>
-  );
-}
-
+// ─── Privy ウォレットセクション ───────────────────────────
 function PrivyWalletSection({
   onWalletReady,
-  onLogout
+  onLogout,
 }: {
   onWalletReady: (wallet: { address: string; publicKey: string }) => void;
   onLogout: () => void;
 }) {
   const { user, authenticated } = usePrivy();
   const { login } = useLogin();
-  const { logout: privyLogout } = useLogout();
   const { createWallet } = useCreateWallet();
 
   useEffect(() => {
-    const tonWallets = user?.linkedAccounts?.filter(
+    const tonWallet = user?.linkedAccounts?.find(
       (a) => a.type === 'wallet' && a.chainType === 'ton'
-    );
-    const tonWallet = tonWallets?.[0] as { address?: string; publicKey?: string } | undefined;
+    ) as { address?: string; publicKey?: string } | undefined;
     if (tonWallet?.address && tonWallet?.publicKey) {
-      onWalletReady({
-        address: tonWallet.address,
-        publicKey: tonWallet.publicKey
-      });
+      onWalletReady({ address: tonWallet.address, publicKey: tonWallet.publicKey });
     }
   }, [user, onWalletReady]);
 
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm">Login with Privy to manage your embedded wallet</p>
+        <p className="text-[#8d8d8d] text-sm text-center">Login with Privy to create an embedded TON wallet</p>
         <button
           onClick={login}
           className="px-6 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-lg font-medium transition-colors"
@@ -185,19 +158,9 @@ function PrivyWalletSection({
     );
   }
 
-  const tonWallets = user?.linkedAccounts?.filter(
+  const tonWallet = user?.linkedAccounts?.find(
     (a) => a.type === 'wallet' && a.chainType === 'ton'
-  );
-
-  const handleCreateTonWallet = async () => {
-    try {
-      await createWallet({ chainType: 'ton' });
-    } catch (e) {
-      console.error('Failed to create TON wallet:', e);
-    }
-  };
-
-  const tonWallet = tonWallets?.[0] as { address?: string; publicKey?: string } | undefined;
+  ) as { address?: string; publicKey?: string } | undefined;
 
   return (
     <div className="flex flex-col gap-4 py-4">
@@ -210,27 +173,21 @@ function PrivyWalletSection({
             <p className="text-sm font-medium text-[#202020]">
               {user?.telegram?.username || user?.email?.address || 'User'}
             </p>
-            <p className="text-xs text-[#8d8d8d]">{user?.id}</p>
           </div>
         </div>
-        <button
-          onClick={onLogout}
-          className="text-xs text-[#8d8d8d] hover:text-[#202020] transition-colors"
-        >
+        <button onClick={onLogout} className="text-xs text-[#8d8d8d] hover:text-[#202020] transition-colors">
           Logout
         </button>
       </div>
 
-      {tonWallet?.address && tonWallet?.publicKey ? (
-        <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
+      {tonWallet?.address ? (
+        <div className="bg-[#f9f9f9] rounded-lg p-3 border border-[#e8e8e8]">
           <p className="text-xs text-[#8d8d8d] mb-1">Privy TON Wallet</p>
-          <p className="text-sm font-mono text-[#0071f0] break-all">
-            {tonWallet.address}
-          </p>
+          <p className="text-xs font-mono text-[#0071f0] break-all">{tonWallet.address}</p>
         </div>
       ) : (
         <button
-          onClick={handleCreateTonWallet}
+          onClick={() => createWallet({ chainType: 'ton' }).catch(console.error)}
           className="w-full py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-lg font-medium transition-colors"
         >
           Create TON Wallet
@@ -240,34 +197,23 @@ function PrivyWalletSection({
   );
 }
 
+// ─── TON Connect ウォレットセクション ─────────────────────
 function TonConnectWalletSection({
   onWalletReady,
-  onDisconnect
+  onDisconnect,
 }: {
-  onWalletReady: (wallet: { address: string }, tcWallet?: any) => void;
+  onWalletReady: (wallet: { address: string }, rawWallet: any) => void;
   onDisconnect: () => void;
 }) {
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
-
   const address = wallet?.account?.address;
   const connected = !!wallet;
 
-  const formatAddress = (addr: string) => {
-    if (!addr) return '';
-    if (addr.startsWith('0:')) {
-      const hex = addr.slice(2);
-      return `EQ${hex}`;
-    }
-    return addr;
-  };
+  const formatAddress = (addr: string) =>
+    addr.startsWith('0:') ? `EQ${addr.slice(2)}` : addr;
 
   const formattedAddress = address ? formatAddress(address) : '';
-
-  const handleDisconnect = async () => {
-    await tonConnectUI?.disconnect();
-    onDisconnect();
-  };
 
   useEffect(() => {
     if (connected && formattedAddress) {
@@ -278,7 +224,7 @@ function TonConnectWalletSection({
   if (!connected || !address) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm">Connect your TON wallet with TON Connect</p>
+        <p className="text-[#8d8d8d] text-sm text-center">Connect your TON wallet with TON Connect</p>
         <TonConnectButton className="!bg-[#0088cc] hover:!bg-[#0066aa]" />
       </div>
     );
@@ -291,136 +237,153 @@ function TonConnectWalletSection({
           <div className="w-8 h-8 bg-[#0088cc] rounded-full flex items-center justify-center text-white text-sm font-bold">
             TC
           </div>
-          <div>
-            <p className="text-sm font-medium text-[#202020]">TON Connect</p>
-            <p className="text-xs text-[#8d8d8d]">{formattedAddress.slice(0, 6)}...{formattedAddress.slice(-4)}</p>
-          </div>
+          <p className="text-sm font-medium text-[#202020]">TON Connect</p>
         </div>
         <button
-          onClick={handleDisconnect}
+          onClick={async () => { await tonConnectUI?.disconnect(); onDisconnect(); }}
           className="text-xs text-[#8d8d8d] hover:text-[#202020] transition-colors"
         >
           Disconnect
         </button>
       </div>
-
-      <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
+      <div className="bg-[#f9f9f9] rounded-lg p-3 border border-[#e8e8e8]">
         <p className="text-xs text-[#8d8d8d] mb-1">TON Connect Wallet</p>
-        <p className="text-sm font-mono text-[#0088cc] break-all">
-          {formattedAddress}
-        </p>
+        <p className="text-xs font-mono text-[#0088cc] break-all">{formattedAddress}</p>
       </div>
     </div>
   );
 }
 
+// ─── ウォレットモーダル ───────────────────────────────────
+function WalletModal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8e8e8]">
+          <h2 className="text-sm font-semibold text-[#202020]">{title}</h2>
+          <button onClick={onClose} className="text-[#8d8d8d] hover:text-[#202020] transition-colors text-lg leading-none">×</button>
+        </div>
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── メインページ ─────────────────────────────────────────
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('privy');
   const { authenticated, user } = usePrivy();
   const { logout } = useLogout();
   const { signRawHash } = useSignRawHash();
   const tcWalletState = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
 
-  const [walletInfo, setWalletInfo] = useState<{
-    address: string;
-    publicKey?: string;
-    adapter: PrivyTonConnectAdapter | TonConnectAdapter;
-    tcWallet?: any;
-  } | null>(null);
+  // Privy と TON Connect を完全独立して管理
+  const [privyWallet, setPrivyWallet] = useState<PrivyWalletInfo | null>(null);
+  const [tcWallet, setTcWallet] = useState<TcWalletInfo | null>(null);
+  const [activeWallet, setActiveWallet] = useState<ActiveWallet | null>(null);
 
-  const walletInfoRef = useRef(walletInfo);
-  walletInfoRef.current = walletInfo;
+  // モーダル開閉
+  const [showPrivyModal, setShowPrivyModal] = useState(false);
+  const [showTcModal, setShowTcModal] = useState(false);
 
-  const [showModal, setShowModal] = useState(false);
+  // 明示的にdisconnectしたフラグ（自動再接続防止）
+  const tcManuallyDisconnected = useRef(false);
 
-  // ページロード時のPrivyウォレット状態復元
+  // ─── Privy 状態復元（ページロード時） ───────────────────
   useEffect(() => {
-    if (connectionMethod !== 'privy' || !authenticated || walletInfoRef.current) return;
+    if (!authenticated || privyWallet) return;
     const tonWallet = user?.linkedAccounts?.find(
       (a) => a.type === 'wallet' && a.chainType === 'ton'
     ) as { address?: string; publicKey?: string } | undefined;
     if (tonWallet?.address && tonWallet?.publicKey) {
       const adapter = new PrivyTonConnectAdapter();
-      setWalletInfo({ address: tonWallet.address, publicKey: tonWallet.publicKey, adapter: adapter as any });
+      setPrivyWallet({ address: tonWallet.address, publicKey: tonWallet.publicKey, adapter });
+      setActiveWallet('privy');
     }
-  }, [authenticated, user, connectionMethod]);
+  }, [authenticated, user, privyWallet]);
 
-  // ページロード時のTON Connect状態復元
+  // ─── TON Connect 状態復元（ページロード時） ──────────────
   useEffect(() => {
-    if (connectionMethod !== 'tonconnect' || walletInfoRef.current || !tcWalletState) return;
+    if (!tcWalletState || tcWallet || tcManuallyDisconnected.current) return;
     const addr = tcWalletState.account?.address;
     if (!addr) return;
     const formatted = addr.startsWith('0:') ? `EQ${addr.slice(2)}` : addr;
     const adapter = new TonConnectAdapter();
     adapter.connect(tcWalletState);
-    setWalletInfo({ address: formatted, adapter: adapter as any, tcWallet: tcWalletState });
-  }, [tcWalletState, connectionMethod]);
+    setTcWallet({ address: formatted, adapter, rawWallet: tcWalletState });
+    setActiveWallet((prev) => prev ?? 'tonconnect');
+  }, [tcWalletState, tcWallet]);
 
-  const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
-    if (connectionMethod === 'privy') {
-      const adapter = new PrivyTonConnectAdapter();
-      setWalletInfo({
-        address: wallet.address,
-        publicKey: wallet.publicKey,
-        adapter: adapter as any,
-      });
-    } else {
-      const adapter = new TonConnectAdapter();
-      adapter.connect(tcWallet!);
-      setWalletInfo({
-        address: wallet.address,
-        adapter: adapter as any,
-        tcWallet: tcWallet,
-      });
-    }
-  };
+  // モーダル自動クローズ（接続完了時）
+  useEffect(() => { if (privyWallet) setShowPrivyModal(false); }, [privyWallet]);
+  useEffect(() => { if (tcWallet) setShowTcModal(false); }, [tcWallet]);
 
-  const handleDisconnect = useCallback(async () => {
-    const currentWalletInfo = walletInfoRef.current;
-    if (currentWalletInfo?.adapter) {
-      try {
-        await currentWalletInfo.adapter.disconnect();
-      } catch (error) {
-        console.error('Failed to disconnect adapter:', error);
-      }
-    }
-    setWalletInfo(null);
-  }, []);
+  // ─── Privy ウォレット接続コールバック ────────────────────
+  const handlePrivyWalletReady = useCallback((wallet: { address: string; publicKey: string }) => {
+    if (privyWallet?.address === wallet.address) return;
+    const adapter = new PrivyTonConnectAdapter();
+    setPrivyWallet({ address: wallet.address, publicKey: wallet.publicKey, adapter });
+    setActiveWallet('privy');
+  }, [privyWallet]);
 
-  useEffect(() => {
-    const cleanup = async () => {
-      const currentWalletInfo = walletInfoRef.current;
-      if (currentWalletInfo?.adapter) {
-        try {
-          await currentWalletInfo.adapter.disconnect();
-        } catch (error) {
-          console.error('Failed to disconnect adapter on method change:', error);
-        }
-        setWalletInfo(null);
-      }
-    };
-
-    cleanup();
-  }, [connectionMethod]);
-
-  useEffect(() => {
-    if (connectionMethod === 'privy' && !authenticated && walletInfoRef.current) {
-      handleDisconnect();
-    }
-  }, [authenticated, connectionMethod, handleDisconnect]);
-
+  // ─── Privy ログアウト ─────────────────────────────────────
   const handlePrivyLogout = useCallback(async () => {
-    await handleDisconnect();
+    if (privyWallet?.adapter) {
+      try { await privyWallet.adapter.disconnect(); } catch (_) {}
+    }
+    setPrivyWallet(null);
+    if (activeWallet === 'privy') setActiveWallet(tcWallet ? 'tonconnect' : null);
     await logout();
-  }, [handleDisconnect, logout]);
+  }, [privyWallet, activeWallet, tcWallet, logout]);
 
-  const hasWallet = !!walletInfo;
+  // ─── TON Connect 接続コールバック ────────────────────────
+  const handleTcWalletReady = useCallback((wallet: { address: string }, rawWallet: any) => {
+    if (tcWallet?.address === wallet.address) return;
+    tcManuallyDisconnected.current = false;
+    const adapter = new TonConnectAdapter();
+    adapter.connect(rawWallet);
+    setTcWallet({ address: wallet.address, adapter, rawWallet });
+    setActiveWallet('tonconnect');
+  }, [tcWallet]);
 
+  // ─── TON Connect 切断 ────────────────────────────────────
+  const handleTcDisconnect = useCallback(async () => {
+    tcManuallyDisconnected.current = true;
+    if (tcWallet?.adapter) {
+      try { await tcWallet.adapter.disconnect(); } catch (_) {}
+    }
+    try { await tonConnectUI?.disconnect(); } catch (_) {}
+    setTcWallet(null);
+    if (activeWallet === 'tonconnect') setActiveWallet(privyWallet ? 'privy' : null);
+  }, [tcWallet, tonConnectUI, activeWallet, privyWallet]);
+
+  // Privyがログアウトされたら state をクリア
   useEffect(() => {
-    if (hasWallet) setShowModal(false);
-  }, [hasWallet]);
+    if (!authenticated && privyWallet) {
+      setPrivyWallet(null);
+      if (activeWallet === 'privy') setActiveWallet(tcWallet ? 'tonconnect' : null);
+    }
+  }, [authenticated, privyWallet, activeWallet, tcWallet]);
+
+  // SwapWidgetに渡す情報
+  const swapWalletAddress = activeWallet === 'privy' ? privyWallet?.address : tcWallet?.address;
+  const swapPublicKey = activeWallet === 'privy' ? (privyWallet?.publicKey ?? '') : '';
+  const swapSignRawHash = activeWallet === 'privy' ? signRawHash : undefined;
+  const swapTcWallet = activeWallet === 'tonconnect' ? tcWallet?.rawWallet : undefined;
+  const hasActiveWallet = !!swapWalletAddress;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
@@ -429,89 +392,108 @@ export default function Home() {
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <span className="text-lg">🦅</span>
           <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove</h1>
-          <div className="ml-auto">
-            <HeaderWalletStatus
-              hasWallet={hasWallet}
-              walletInfo={walletInfo}
-              connectionMethod={connectionMethod}
-              onPrivyLogout={handlePrivyLogout}
-              onDisconnect={handleDisconnect}
-              onConnectClick={() => setShowModal(true)}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Privy ステータス */}
+            <WalletPill
+              label="P"
+              color="#0071f0"
+              address={privyWallet?.address}
+              onConnect={() => setShowPrivyModal(true)}
+              onAction={handlePrivyLogout}
+              actionLabel="Logout"
+            />
+            {/* TON Connect ステータス */}
+            <WalletPill
+              label="TC"
+              color="#0088cc"
+              address={tcWallet?.address}
+              onConnect={() => { tcManuallyDisconnected.current = false; setShowTcModal(true); }}
+              onAction={handleTcDisconnect}
+              actionLabel="Disconnect"
             />
           </div>
         </div>
       </header>
 
-      {/* ウォレット接続モーダル */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
-        >
-          <div className="bg-white rounded-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8e8e8]">
-              <h2 className="text-sm font-semibold text-[#202020]">Connect Wallet</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-[#8d8d8d] hover:text-[#202020] transition-colors text-lg leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-4">
-              <ConnectionSelector
-                selected={connectionMethod}
-                onSelect={setConnectionMethod}
-              />
-              <div className="border-t border-[#e8e8e8] -mx-4 mt-4 mb-0" />
-              {connectionMethod === 'privy' ? (
-                <PrivyWalletSection
-                  onWalletReady={handleWalletReady}
-                  onLogout={handlePrivyLogout}
-                />
-              ) : (
-                <TonConnectWalletSection
-                  onWalletReady={handleWalletReady}
-                  onDisconnect={handleDisconnect}
-                />
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Privy モーダル */}
+      {showPrivyModal && (
+        <WalletModal title="Connect with Privy" onClose={() => setShowPrivyModal(false)}>
+          <PrivyWalletSection
+            onWalletReady={handlePrivyWalletReady}
+            onLogout={handlePrivyLogout}
+          />
+        </WalletModal>
+      )}
+
+      {/* TON Connect モーダル */}
+      {showTcModal && (
+        <WalletModal title="Connect with TON Connect" onClose={() => setShowTcModal(false)}>
+          <TonConnectWalletSection
+            onWalletReady={handleTcWalletReady}
+            onDisconnect={handleTcDisconnect}
+          />
+        </WalletModal>
       )}
 
       {/* メイン */}
       <main className="flex-1 flex flex-col gap-4 max-w-lg mx-auto w-full px-4 py-6">
-        {/* TGカード: 常時表示 */}
         <WelcomeCard />
 
-        {/* 未接続時のCTAボタン */}
-        {!hasWallet && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-full py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-xl font-medium transition-colors text-sm"
-          >
-            Connect Wallet to Swap
-          </button>
+        {/* 未接続時CTA */}
+        {!hasActiveWallet && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowPrivyModal(true)}
+              className="flex-1 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-xl font-medium transition-colors text-sm"
+            >
+              Connect with Privy
+            </button>
+            <button
+              onClick={() => { tcManuallyDisconnected.current = false; setShowTcModal(true); }}
+              className="flex-1 py-3 bg-[#0088cc] hover:bg-[#0066aa] text-white rounded-xl font-medium transition-colors text-sm"
+            >
+              TON Connect
+            </button>
+          </div>
         )}
 
-        {/* Swapウィジェット: 接続済み時のみ表示 */}
-        {hasWallet && walletInfo && (
+        {/* 接続済みウォレット切り替え（両方接続時） */}
+        {privyWallet && tcWallet && (
+          <div className="bg-white rounded-xl border border-[#e8e8e8] p-3 flex gap-2">
+            <button
+              onClick={() => setActiveWallet('privy')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+                activeWallet === 'privy' ? 'bg-[#0071f0] text-white' : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
+              }`}
+            >
+              Swap with Privy
+            </button>
+            <button
+              onClick={() => setActiveWallet('tonconnect')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+                activeWallet === 'tonconnect' ? 'bg-[#0088cc] text-white' : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
+              }`}
+            >
+              Swap with TON Connect
+            </button>
+          </div>
+        )}
+
+        {/* Swap ウィジェット */}
+        {hasActiveWallet && swapWalletAddress && (
           <SwapWidget
-            walletAddress={walletInfo.address}
-            publicKey={walletInfo.publicKey || ''}
-            signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
-            tcWallet={walletInfo.tcWallet}
+            walletAddress={swapWalletAddress}
+            publicKey={swapPublicKey}
+            signRawHash={swapSignRawHash}
+            tcWallet={swapTcWallet}
           />
         )}
       </main>
 
-      {/* フッター: TGリンク常設 */}
+      {/* フッター */}
       <footer className="border-t border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
         <div className="max-w-lg mx-auto flex items-center justify-center gap-1.5">
-          <span className="text-[#8d8d8d]">
-            <TelegramIcon size={14} />
-          </span>
+          <span className="text-[#8d8d8d]"><TelegramIcon size={14} /></span>
           <a
             href="https://t.me/+gTcwEpkZnUk4ZDI9"
             target="_blank"
