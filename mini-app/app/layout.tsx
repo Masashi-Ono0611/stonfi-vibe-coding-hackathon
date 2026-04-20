@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mini-app-rho-bay.vercel.app"),
   title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
   description: "Two AI agents debate in Telegram and autonomously execute swaps on TON via StonFi Omniston.",
   icons: {
