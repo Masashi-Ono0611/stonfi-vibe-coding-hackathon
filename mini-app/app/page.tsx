@@ -151,16 +151,29 @@ function TonConnectWalletSection({
   const address = wallet?.account?.address;
   const connected = !!wallet;
 
+  // Convert raw address (0:...) to user-friendly format (EQ...)
+  const formatAddress = (addr: string) => {
+    if (!addr) return '';
+    if (addr.startsWith('0:')) {
+      // Convert 0:hex to EQ format
+      const hex = addr.slice(2);
+      return `EQ${hex}`;
+    }
+    return addr;
+  };
+
+  const formattedAddress = address ? formatAddress(address) : '';
+
   const handleDisconnect = async () => {
     await tonConnectUI?.disconnect();
     onDisconnect();
   };
 
   useEffect(() => {
-    if (connected && address) {
-      onWalletReady({ address }, wallet);
+    if (connected && formattedAddress) {
+      onWalletReady({ address: formattedAddress }, wallet);
     }
-  }, [connected, address, onWalletReady, wallet]);
+  }, [connected, formattedAddress, onWalletReady, wallet]);
 
   if (!connected || !address) {
     return (
@@ -180,7 +193,7 @@ function TonConnectWalletSection({
           </div>
           <div>
             <p className="text-sm font-medium text-[#202020]">TON Connect</p>
-            <p className="text-xs text-[#8d8d8d]">{address.slice(0, 6)}...{address.slice(-4)}</p>
+            <p className="text-xs text-[#8d8d8d]">{formattedAddress.slice(0, 6)}...{formattedAddress.slice(-4)}</p>
           </div>
         </div>
         <button
@@ -194,7 +207,7 @@ function TonConnectWalletSection({
       <div className="bg-[#f9f9f9] rounded-lg p-4 border border-[#e8e8e8]">
         <p className="text-xs text-[#8d8d8d] mb-1">TON Connect Wallet</p>
         <p className="text-sm font-mono text-[#0088cc] break-all">
-          {address}
+          {formattedAddress}
         </p>
       </div>
     </div>
