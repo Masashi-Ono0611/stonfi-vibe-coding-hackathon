@@ -165,7 +165,7 @@ function TonConnectWalletSection({
   if (!connected || !address) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm">Login with TON Connect to manage your wallet</p>
+        <p className="text-[#8d8d8d] text-sm">Connect your TON wallet with TON Connect</p>
         <TonConnectButton className="!bg-[#0088cc] hover:!bg-[#0066aa]" />
       </div>
     );
@@ -187,7 +187,7 @@ function TonConnectWalletSection({
           onClick={handleDisconnect}
           className="text-xs text-[#8d8d8d] hover:text-[#202020] transition-colors"
         >
-          Logout
+          Disconnect
         </button>
       </div>
 
