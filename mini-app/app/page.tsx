@@ -147,15 +147,15 @@ export default function Home() {
 
   // TON Connect 状態復元
   useEffect(() => {
-    if (!tcWalletState || tcWallet || tcManuallyDisconnected.current) return;
+    if (!tcWalletState || !tonConnectUI || tcWallet || tcManuallyDisconnected.current) return;
     const addr = tcWalletState.account?.address;
     if (!addr) return;
     const formatted = addr.startsWith('0:') ? `EQ${addr.slice(2)}` : addr;
     const adapter = new TonConnectAdapter();
-    adapter.connect(tcWalletState);
+    adapter.connect(tonConnectUI, tcWalletState);
     setTcWallet({ address: formatted, adapter, rawWallet: tcWalletState });
     setActiveWallet((prev) => prev ?? 'tonconnect');
-  }, [tcWalletState, tcWallet]);
+  }, [tcWalletState, tonConnectUI, tcWallet]);
 
   // Privy ログアウト検知
   useEffect(() => {
@@ -183,18 +183,6 @@ export default function Home() {
     setTcWallet(null);
     if (activeWallet === 'tonconnect') setActiveWallet(privyWallet ? 'privy' : null);
   }, [tcWallet, tonConnectUI, activeWallet, privyWallet]);
-
-  // TON Connect 接続完了の検知（tonConnectUI経由で接続した場合）
-  useEffect(() => {
-    if (!tcWalletState || tcWallet || tcManuallyDisconnected.current) return;
-    const addr = tcWalletState.account?.address;
-    if (!addr) return;
-    const formatted = addr.startsWith('0:') ? `EQ${addr.slice(2)}` : addr;
-    const adapter = new TonConnectAdapter();
-    adapter.connect(tcWalletState);
-    setTcWallet({ address: formatted, adapter, rawWallet: tcWalletState });
-    setActiveWallet('tonconnect');
-  }, [tcWalletState, tcWallet]);
 
   const swapWalletAddress = activeWallet === 'privy' ? privyWallet?.address : tcWallet?.address;
   const swapPublicKey = activeWallet === 'privy' ? (privyWallet?.publicKey ?? '') : '';
@@ -304,6 +292,7 @@ export default function Home() {
             publicKey={swapPublicKey}
             signRawHash={swapSignRawHash}
             tcWallet={swapTcWallet}
+            tonConnectUI={activeWallet === 'tonconnect' ? tonConnectUI : undefined}
           />
         )}
       </main>

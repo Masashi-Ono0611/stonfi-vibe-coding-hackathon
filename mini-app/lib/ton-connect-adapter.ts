@@ -1,5 +1,5 @@
-import { Address, Cell } from '@ton/ton';
-import type { WalletInfoWithOpenMethod } from '@tonconnect/ui-react';
+import { Cell } from '@ton/ton';
+import type { TonConnectUI, WalletInfoWithOpenMethod } from '@tonconnect/ui-react';
 
 type Wallet = {
   account: {
@@ -32,11 +32,13 @@ type SendTransactionRequest = {
 type SendTransactionResponse = { boc: string };
 
 export class TonConnectAdapter {
+  private _tonConnectUI: TonConnectUI | null = null;
   private _wallet: WalletInfoWithOpenMethod | null = null;
   private _listeners: Array<(wallet: Wallet | null) => void> = [];
   private _errorListeners: Array<(err: Error) => void> = [];
 
-  async connect(walletInfo: WalletInfoWithOpenMethod) {
+  async connect(tonConnectUI: TonConnectUI, walletInfo: WalletInfoWithOpenMethod) {
+    this._tonConnectUI = tonConnectUI;
     this._wallet = walletInfo;
     this._notifyListeners();
   }
@@ -93,13 +95,11 @@ export class TonConnectAdapter {
   }
 
   async sendTransaction(txReq: SendTransactionRequest): Promise<SendTransactionResponse> {
-    if (!this._wallet) {
+    if (!this._tonConnectUI || !this._wallet) {
       throw new Error('Wallet not connected');
     }
 
-    // Use TON Connect's sendTransaction method
     try {
-      // Convert the transaction request to TON Connect format
       const messages = txReq.messages.map((msg) => ({
         address: msg.address,
         amount: msg.amount,
@@ -107,15 +107,13 @@ export class TonConnectAdapter {
         stateInit: msg.stateInit ? Cell.fromBase64(msg.stateInit).toBoc().toString('base64') : undefined,
       }));
 
-      const result = await this._wallet.sendTransaction({
+      // TonConnectUI.sendTransaction() が実際にウォレットアプリを起動してユーザー確認を求める
+      const result = await this._tonConnectUI.sendTransaction({
         validUntil: txReq.validUntil,
-        network: txReq.network,
-        from: txReq.from,
         messages,
       });
 
-      // Return the BOC
-      return { boc: result };
+      return { boc: result.boc };
     } catch (error) {
       console.error('TON Connect transaction failed:', error);
       throw error;
