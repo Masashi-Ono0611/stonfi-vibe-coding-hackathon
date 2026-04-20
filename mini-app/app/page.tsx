@@ -321,6 +321,7 @@ export default function Home() {
   const { authenticated, user } = usePrivy();
   const { logout } = useLogout();
   const { signRawHash } = useSignRawHash();
+  const tcWalletState = useTonWallet();
 
   const [walletInfo, setWalletInfo] = useState<{
     address: string;
@@ -332,10 +333,30 @@ export default function Home() {
   const walletInfoRef = useRef(walletInfo);
   walletInfoRef.current = walletInfo;
 
-  const walletCardRef = useRef<HTMLDivElement>(null);
-  const handleConnectClick = useCallback(() => {
-    walletCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, []);
+  const [showModal, setShowModal] = useState(false);
+
+  // ページロード時のPrivyウォレット状態復元
+  useEffect(() => {
+    if (connectionMethod !== 'privy' || !authenticated || walletInfoRef.current) return;
+    const tonWallet = user?.linkedAccounts?.find(
+      (a) => a.type === 'wallet' && a.chainType === 'ton'
+    ) as { address?: string; publicKey?: string } | undefined;
+    if (tonWallet?.address && tonWallet?.publicKey) {
+      const adapter = new PrivyTonConnectAdapter();
+      setWalletInfo({ address: tonWallet.address, publicKey: tonWallet.publicKey, adapter: adapter as any });
+    }
+  }, [authenticated, user, connectionMethod]);
+
+  // ページロード時のTON Connect状態復元
+  useEffect(() => {
+    if (connectionMethod !== 'tonconnect' || walletInfoRef.current || !tcWalletState) return;
+    const addr = tcWalletState.account?.address;
+    if (!addr) return;
+    const formatted = addr.startsWith('0:') ? `EQ${addr.slice(2)}` : addr;
+    const adapter = new TonConnectAdapter();
+    adapter.connect(tcWalletState);
+    setWalletInfo({ address: formatted, adapter: adapter as any, tcWallet: tcWalletState });
+  }, [tcWalletState, connectionMethod]);
 
   const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
     if (connectionMethod === 'privy') {
@@ -397,6 +418,10 @@ export default function Home() {
 
   const hasWallet = !!walletInfo;
 
+  useEffect(() => {
+    if (hasWallet) setShowModal(false);
+  }, [hasWallet]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
       {/* ヘッダー */}
@@ -411,36 +436,64 @@ export default function Home() {
               connectionMethod={connectionMethod}
               onPrivyLogout={handlePrivyLogout}
               onDisconnect={handleDisconnect}
-              onConnectClick={handleConnectClick}
+              onConnectClick={() => setShowModal(true)}
             />
           </div>
         </div>
       </header>
+
+      {/* ウォレット接続モーダル */}
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8e8e8]">
+              <h2 className="text-sm font-semibold text-[#202020]">Connect Wallet</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-[#8d8d8d] hover:text-[#202020] transition-colors text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4">
+              <ConnectionSelector
+                selected={connectionMethod}
+                onSelect={setConnectionMethod}
+              />
+              <div className="border-t border-[#e8e8e8] -mx-4 mt-4 mb-0" />
+              {connectionMethod === 'privy' ? (
+                <PrivyWalletSection
+                  onWalletReady={handleWalletReady}
+                  onLogout={handlePrivyLogout}
+                />
+              ) : (
+                <TonConnectWalletSection
+                  onWalletReady={handleWalletReady}
+                  onDisconnect={handleDisconnect}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* メイン */}
       <main className="flex-1 flex flex-col gap-4 max-w-lg mx-auto w-full px-4 py-6">
         {/* TGカード: 常時表示 */}
         <WelcomeCard />
 
-        {/* ウォレット接続カード */}
-        <div ref={walletCardRef} className="bg-white rounded-xl border border-[#e8e8e8] p-4">
-          <ConnectionSelector
-            selected={connectionMethod}
-            onSelect={setConnectionMethod}
-          />
-          <div className="border-t border-[#e8e8e8] -mx-4 mt-4 mb-0" />
-          {connectionMethod === 'privy' ? (
-            <PrivyWalletSection
-              onWalletReady={handleWalletReady}
-              onLogout={handlePrivyLogout}
-            />
-          ) : (
-            <TonConnectWalletSection
-              onWalletReady={handleWalletReady}
-              onDisconnect={handleDisconnect}
-            />
-          )}
-        </div>
+        {/* 未接続時のCTAボタン */}
+        {!hasWallet && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-xl font-medium transition-colors text-sm"
+          >
+            Connect Wallet to Swap
+          </button>
+        )}
 
         {/* Swapウィジェット: 接続済み時のみ表示 */}
         {hasWallet && walletInfo && (
