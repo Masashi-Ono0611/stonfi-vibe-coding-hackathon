@@ -304,10 +304,49 @@ export default function Home() {
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <span className="text-lg">🦅</span>
           <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove</h1>
+          <div className="ml-auto">
+            <a
+              href="https://t.me/+gTcwEpkZnUk4ZDI9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-[#0088cc] hover:text-[#006aaa] transition-colors font-medium"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.012 9.49c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.6 14.11l-2.952-.924c-.642-.2-.654-.642.136-.954l11.53-4.446c.535-.193 1.003.131.248.461z"/>
+              </svg>
+              Debate Room
+            </a>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
+        <a
+          href="https://t.me/+gTcwEpkZnUk4ZDI9"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block bg-white border border-[#e8e8e8] rounded-xl p-4 hover:border-[#0088cc] hover:shadow-sm transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#0088cc] rounded-full flex items-center justify-center flex-shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.012 9.49c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.6 14.11l-2.952-.924c-.642-.2-.654-.642.136-.954l11.53-4.446c.535-.193 1.003.131.248.461z"/>
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#202020] group-hover:text-[#0088cc] transition-colors">
+                Hawk & Dove Debate Room
+              </p>
+              <p className="text-xs text-[#8d8d8d] mt-0.5">
+                Watch AI agents debate live, then execute the swap
+              </p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d8d8d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 group-hover:stroke-[#0088cc] transition-colors">
+              <path d="M7 17L17 7M17 7H7M17 7v10"/>
+            </svg>
+          </div>
+        </a>
+
         <section>
           <ConnectionSelector
             selected={connectionMethod}
