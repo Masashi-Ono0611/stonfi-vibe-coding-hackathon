@@ -10,6 +10,104 @@ import { TonConnectAdapter } from '@/lib/ton-connect-adapter';
 
 type ConnectionMethod = 'privy' | 'tonconnect';
 
+function TelegramIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.012 9.49c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.6 14.11l-2.952-.924c-.642-.2-.654-.642.136-.954l11.53-4.446c.535-.193 1.003.131.248.461z"/>
+    </svg>
+  );
+}
+
+function HeaderWalletStatus({
+  hasWallet,
+  walletInfo,
+  connectionMethod,
+  onPrivyLogout,
+  onDisconnect,
+}: {
+  hasWallet: boolean;
+  walletInfo: { address: string } | null;
+  connectionMethod: ConnectionMethod;
+  onPrivyLogout: () => Promise<void>;
+  onDisconnect: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!hasWallet) {
+    return (
+      <span className="text-xs px-3 py-1.5 rounded-full border border-[#e8e8e8] text-[#8d8d8d] bg-white">
+        Connect Wallet
+      </span>
+    );
+  }
+
+  const isPrivy = connectionMethod === 'privy';
+  const color = isPrivy ? '#0071f0' : '#0088cc';
+  const label = isPrivy ? 'P' : 'TC';
+  const addr = walletInfo?.address ?? '';
+  const shortAddr = addr.length > 8 ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : addr;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-white font-medium"
+        style={{ backgroundColor: color }}
+      >
+        <span>{label}</span>
+        <span className="font-mono opacity-90">{shortAddr}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" className="opacity-70">
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-9 bg-white border border-[#e8e8e8] rounded-lg shadow-md py-1 min-w-[130px] z-20">
+            <button
+              onClick={() => {
+                setOpen(false);
+                isPrivy ? onPrivyLogout() : onDisconnect();
+              }}
+              className="w-full text-left text-xs px-4 py-2 text-[#202020] hover:bg-[#f4f4f4] transition-colors"
+            >
+              {isPrivy ? 'Logout' : 'Disconnect'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function WelcomeCard() {
+  return (
+    <a
+      href="https://t.me/+gTcwEpkZnUk4ZDI9"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white border border-[#e8e8e8] rounded-xl p-4 hover:border-[#0088cc] hover:shadow-sm transition-all group"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#0088cc] rounded-full flex items-center justify-center flex-shrink-0 text-white">
+          <TelegramIcon size={20} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#202020] group-hover:text-[#0088cc] transition-colors">
+            Hawk & Dove Debate Room
+          </p>
+          <p className="text-xs text-[#8d8d8d] mt-0.5">
+            Watch AI agents debate live, then execute the swap
+          </p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d8d8d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 group-hover:stroke-[#0088cc] transition-colors">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+    </a>
+  );
+}
+
 function ConnectionSelector({
   selected,
   onSelect
@@ -18,7 +116,7 @@ function ConnectionSelector({
   onSelect: (method: ConnectionMethod) => void;
 }) {
   return (
-    <div className="flex gap-2 mb-6">
+    <div className="flex gap-2">
       <button
         onClick={() => onSelect('privy')}
         className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
@@ -56,7 +154,6 @@ function PrivyWalletSection({
   const { createWallet } = useCreateWallet();
 
   useEffect(() => {
-    // Check if already has TON wallet
     const tonWallets = user?.linkedAccounts?.filter(
       (a) => a.type === 'wallet' && a.chainType === 'ton'
     );
@@ -98,7 +195,7 @@ function PrivyWalletSection({
   const tonWallet = tonWallets?.[0] as { address?: string; publicKey?: string } | undefined;
 
   return (
-    <div className="flex flex-col gap-4 py-6">
+    <div className="flex flex-col gap-4 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#0071f0] rounded-full flex items-center justify-center text-white text-sm font-bold">
@@ -151,11 +248,9 @@ function TonConnectWalletSection({
   const address = wallet?.account?.address;
   const connected = !!wallet;
 
-  // Convert raw address (0:...) to user-friendly format (EQ...)
   const formatAddress = (addr: string) => {
     if (!addr) return '';
     if (addr.startsWith('0:')) {
-      // Convert 0:hex to EQ format
       const hex = addr.slice(2);
       return `EQ${hex}`;
     }
@@ -185,7 +280,7 @@ function TonConnectWalletSection({
   }
 
   return (
-    <div className="flex flex-col gap-4 py-6">
+    <div className="flex flex-col gap-4 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#0088cc] rounded-full flex items-center justify-center text-white text-sm font-bold">
@@ -232,11 +327,9 @@ export default function Home() {
   const walletInfoRef = useRef(walletInfo);
   walletInfoRef.current = walletInfo;
 
-  // Handle wallet ready callback
   const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
     if (connectionMethod === 'privy') {
       const adapter = new PrivyTonConnectAdapter();
-      // Note: We'll initialize the adapter when SwapWidget mounts
       setWalletInfo({
         address: wallet.address,
         publicKey: wallet.publicKey,
@@ -253,7 +346,6 @@ export default function Home() {
     }
   };
 
-  // Handle wallet disconnect
   const handleDisconnect = useCallback(async () => {
     const currentWalletInfo = walletInfoRef.current;
     if (currentWalletInfo?.adapter) {
@@ -266,7 +358,6 @@ export default function Home() {
     setWalletInfo(null);
   }, []);
 
-  // Disconnect current wallet when connection method changes
   useEffect(() => {
     const cleanup = async () => {
       const currentWalletInfo = walletInfoRef.current;
@@ -283,14 +374,12 @@ export default function Home() {
     cleanup();
   }, [connectionMethod]);
 
-  // Handle Privy logout - disconnect Omniston widget
   useEffect(() => {
     if (connectionMethod === 'privy' && !authenticated && walletInfoRef.current) {
       handleDisconnect();
     }
   }, [authenticated, connectionMethod, handleDisconnect]);
 
-  // Add logout handler to PrivyWalletSection
   const handlePrivyLogout = useCallback(async () => {
     await handleDisconnect();
     await logout();
@@ -300,61 +389,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
+      {/* ヘッダー */}
       <header className="border-b border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <span className="text-lg">🦅</span>
           <h1 className="text-sm font-semibold text-[#202020]">Hawk & Dove</h1>
           <div className="ml-auto">
-            <a
-              href="https://t.me/+gTcwEpkZnUk4ZDI9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-[#0088cc] hover:text-[#006aaa] transition-colors font-medium"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.012 9.49c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.6 14.11l-2.952-.924c-.642-.2-.654-.642.136-.954l11.53-4.446c.535-.193 1.003.131.248.461z"/>
-              </svg>
-              Debate Room
-            </a>
+            <HeaderWalletStatus
+              hasWallet={hasWallet}
+              walletInfo={walletInfo}
+              connectionMethod={connectionMethod}
+              onPrivyLogout={handlePrivyLogout}
+              onDisconnect={handleDisconnect}
+            />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col gap-6 max-w-lg mx-auto w-full px-4 py-6">
-        <a
-          href="https://t.me/+gTcwEpkZnUk4ZDI9"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block bg-white border border-[#e8e8e8] rounded-xl p-4 hover:border-[#0088cc] hover:shadow-sm transition-all group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#0088cc] rounded-full flex items-center justify-center flex-shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.012 9.49c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.6 14.11l-2.952-.924c-.642-.2-.654-.642.136-.954l11.53-4.446c.535-.193 1.003.131.248.461z"/>
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#202020] group-hover:text-[#0088cc] transition-colors">
-                Hawk & Dove Debate Room
-              </p>
-              <p className="text-xs text-[#8d8d8d] mt-0.5">
-                Watch AI agents debate live, then execute the swap
-              </p>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d8d8d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 group-hover:stroke-[#0088cc] transition-colors">
-              <path d="M7 17L17 7M17 7H7M17 7v10"/>
-            </svg>
-          </div>
-        </a>
+      {/* メイン */}
+      <main className="flex-1 flex flex-col gap-4 max-w-lg mx-auto w-full px-4 py-6">
+        {/* TGカード: 未接続時のみ表示 */}
+        {!hasWallet && <WelcomeCard />}
 
-        <section>
+        {/* ウォレット接続カード */}
+        <div className="bg-white rounded-xl border border-[#e8e8e8] p-4">
           <ConnectionSelector
             selected={connectionMethod}
             onSelect={setConnectionMethod}
           />
-        </section>
-
-        <section>
+          <div className="border-t border-[#e8e8e8] -mx-4 mt-4 mb-0" />
           {connectionMethod === 'privy' ? (
             <PrivyWalletSection
               onWalletReady={handleWalletReady}
@@ -366,23 +429,35 @@ export default function Home() {
               onDisconnect={handleDisconnect}
             />
           )}
-        </section>
+        </div>
 
+        {/* Swapウィジェット: 接続済み時のみ表示 */}
         {hasWallet && walletInfo && (
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm">🔄</span>
-              <h2 className="text-sm font-semibold text-[#202020]">Swap</h2>
-            </div>
-            <SwapWidget
-              walletAddress={walletInfo.address}
-              publicKey={walletInfo.publicKey || ''}
-              signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
-              tcWallet={walletInfo.tcWallet}
-            />
-          </section>
+          <SwapWidget
+            walletAddress={walletInfo.address}
+            publicKey={walletInfo.publicKey || ''}
+            signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
+            tcWallet={walletInfo.tcWallet}
+          />
         )}
       </main>
+
+      {/* フッター: TGリンク常設 */}
+      <footer className="border-t border-[#e8e8e8] px-4 py-3 bg-[#f4f4f4]">
+        <div className="max-w-lg mx-auto flex items-center justify-center gap-1.5">
+          <span className="text-[#8d8d8d]">
+            <TelegramIcon size={14} />
+          </span>
+          <a
+            href="https://t.me/+gTcwEpkZnUk4ZDI9"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[#8d8d8d] hover:text-[#0088cc] transition-colors"
+          >
+            Hawk & Dove Debate Room
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
