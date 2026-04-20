@@ -33,8 +33,13 @@ cd stonfi-vibe-coding-hackathon
 
 ### 注意事項
 
-- `auto_stop_machines = 'stop'` のため、未使用時はマシンが停止する
-- Telegram からのイベント受信時に自動再起動するため通常運用は問題なし
+- このbotはHTTPサービスではなくTelegram long-pollingのworkerのため、`[http_service]`なしで動作
+- マシン `4d893341f90958` に `autostop=false` を設定済み → デプロイ後も常時起動を維持（確認済み）
+- **新規マシンが作成された場合は下記コマンドで autostop を無効化すること**
+  ```bash
+  ~/.fly/bin/fly machine update <MACHINE_ID> --autostop=false --app hawk-dove-bot --yes
+  ~/.fly/bin/fly machine start <MACHINE_ID> --app hawk-dove-bot
+  ```
 - 環境変数は fly.io の Secrets で管理（`.env` は使わない）
 
 ---
