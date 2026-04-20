@@ -18,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <TonConnectUIProvider
       manifestUrl={MANIFEST_URL}
-      uiPreferences={{ theme: 'LIGHT', borderRadius: 'm' }}
+      uiPreferences={{ theme: 'SYSTEM', borderRadius: 'm' }}
     >
       <PrivyProvider
         appId={appId}
