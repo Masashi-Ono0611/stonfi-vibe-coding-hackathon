@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePrivy, useLogin, useLogout } from '@privy-io/react-auth';
 import { useCreateWallet, useSignRawHash } from '@privy-io/react-auth/extended-chains';
 import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
@@ -44,13 +44,15 @@ function ConnectionSelector({
 }
 
 function PrivyWalletSection({
-  onWalletReady
+  onWalletReady,
+  onLogout
 }: {
   onWalletReady: (wallet: { address: string; publicKey: string }) => void;
+  onLogout: () => void;
 }) {
   const { user, authenticated } = usePrivy();
   const { login } = useLogin();
-  const { logout } = useLogout();
+  const { logout: privyLogout } = useLogout();
   const { createWallet } = useCreateWallet();
 
   useEffect(() => {
@@ -110,7 +112,7 @@ function PrivyWalletSection({
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={onLogout}
           className="text-xs text-[#8d8d8d] hover:text-[#202020] transition-colors"
         >
           Logout
@@ -204,6 +206,7 @@ export const dynamic = 'force-dynamic';
 export default function Home() {
   const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('privy');
   const { authenticated, user } = usePrivy();
+  const { logout } = useLogout();
   const { signRawHash } = useSignRawHash();
 
   const [walletInfo, setWalletInfo] = useState<{
@@ -235,9 +238,45 @@ export default function Home() {
   };
 
   // Handle wallet disconnect
-  const handleDisconnect = () => {
+  const handleDisconnect = useCallback(async () => {
+    if (walletInfo?.adapter) {
+      try {
+        await walletInfo.adapter.disconnect();
+      } catch (error) {
+        console.error('Failed to disconnect adapter:', error);
+      }
+    }
     setWalletInfo(null);
-  };
+  }, [walletInfo]);
+
+  // Disconnect current wallet when connection method changes
+  useEffect(() => {
+    const cleanup = async () => {
+      if (walletInfo?.adapter) {
+        try {
+          await walletInfo.adapter.disconnect();
+        } catch (error) {
+          console.error('Failed to disconnect adapter on method change:', error);
+        }
+        setWalletInfo(null);
+      }
+    };
+
+    cleanup();
+  }, [connectionMethod, walletInfo]);
+
+  // Handle Privy logout - disconnect Omniston widget
+  useEffect(() => {
+    if (connectionMethod === 'privy' && !authenticated && walletInfo) {
+      handleDisconnect();
+    }
+  }, [authenticated, connectionMethod, walletInfo, handleDisconnect]);
+
+  // Add logout handler to PrivyWalletSection
+  const handlePrivyLogout = useCallback(async () => {
+    await handleDisconnect();
+    await logout();
+  }, [handleDisconnect, logout]);
 
   const hasWallet = !!walletInfo;
 
@@ -260,7 +299,10 @@ export default function Home() {
 
         <section>
           {connectionMethod === 'privy' ? (
-            <PrivyWalletSection onWalletReady={handleWalletReady} />
+            <PrivyWalletSection
+              onWalletReady={handleWalletReady}
+              onLogout={handlePrivyLogout}
+            />
           ) : (
             <TonConnectWalletSection
               onWalletReady={handleWalletReady}
