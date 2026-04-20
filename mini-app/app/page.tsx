@@ -212,7 +212,7 @@ export default function Home() {
           <div className="ml-auto flex items-center gap-2">
             <WalletPill
               label="P"
-              color="#0071f0"
+              color="#FF6B6B"
               address={privyWallet?.address}
               onConnect={login}
               onAction={handlePrivyLogout}
@@ -240,11 +240,11 @@ export default function Home() {
             <p className="text-xs text-[#8d8d8d] px-1">Connect a wallet to start swapping</p>
             <button
               onClick={login}
-              className="w-full bg-[#0071f0] hover:bg-[#0063e0] rounded-xl p-4 text-left transition-colors"
+              className="w-full bg-[#FF6B6B] hover:bg-[#e85555] rounded-xl p-4 text-left transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#0071f0] text-xs font-bold flex-shrink-0">P</div>
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#FF6B6B] text-xs font-bold flex-shrink-0">P</div>
                   <div>
                     <p className="text-sm font-medium text-white">Privy</p>
                     <p className="text-xs text-white/70 mt-0.5">Passkey, email, or Google — no wallet app needed</p>
@@ -281,7 +281,7 @@ export default function Home() {
             <button
               onClick={() => setActiveWallet('privy')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
-                activeWallet === 'privy' ? 'bg-[#0071f0] text-white' : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
+                activeWallet === 'privy' ? 'bg-[#FF6B6B] text-white' : 'bg-[#e8e8e8] text-[#202020] hover:bg-[#d4d4d4]'
               }`}
             >
               Swap with Privy
