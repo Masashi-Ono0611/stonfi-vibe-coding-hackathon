@@ -6,7 +6,7 @@ import { TonConnectUIProvider } from '@tonconnect/ui-react';
 // TODO: 本番デプロイ時に独自のTON Connect manifest URLを作成して置き換え
 // 参考: bagel-financeプロジェクトではS3にホスティング
 // 現在はテスト用にbagel-financeのmanifestを使用
-const MANIFEST_URL = 'https://bagel-finance.s3.ap-northeast-1.amazonaws.com/tonconnect-manifest-webapp.json';
+const MANIFEST_URL = 'https://mini-app-rho-bay.vercel.app/tonconnect-manifest.json';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
