@@ -441,18 +441,41 @@ export default function Home() {
 
         {/* 未接続時CTA */}
         {!hasActiveWallet && (
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-[#8d8d8d] px-1">Connect a wallet to start swapping</p>
             <button
               onClick={() => setShowPrivyModal(true)}
-              className="flex-1 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-xl font-medium transition-colors text-sm"
+              className="w-full bg-[#0071f0] hover:bg-[#0063e0] rounded-xl p-4 text-left transition-colors"
             >
-              Privy
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">P</div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Privy</p>
+                    <p className="text-xs text-white/70 mt-0.5">Passkey or email — no wallet app needed</p>
+                  </div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
             </button>
             <button
               onClick={() => { tcManuallyDisconnected.current = false; setShowTcModal(true); }}
-              className="flex-1 py-3 bg-[#0088cc] hover:bg-[#0066aa] text-white rounded-xl font-medium transition-colors text-sm"
+              className="w-full bg-[#0088cc] hover:bg-[#0066aa] rounded-xl p-4 text-left transition-colors"
             >
-              TON Connect
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">TC</div>
+                  <div>
+                    <p className="text-sm font-medium text-white">TON Connect</p>
+                    <p className="text-xs text-white/70 mt-0.5">Tonkeeper or any TON wallet app</p>
+                  </div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
             </button>
           </div>
         )}
