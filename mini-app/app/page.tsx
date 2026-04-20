@@ -148,7 +148,7 @@ function PrivyWalletSection({
     return (
       <div className="flex flex-col items-center gap-4 py-8">
         <p className="text-[#8d8d8d] text-sm text-center">
-          Sign up or log in with passkey / email.<br />
+          Sign up or log in with passkey, email, or Google.<br />
           An embedded TON wallet will be created automatically.
         </p>
         <button
