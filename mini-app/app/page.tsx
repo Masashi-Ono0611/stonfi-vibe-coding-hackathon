@@ -24,20 +24,25 @@ function HeaderWalletStatus({
   connectionMethod,
   onPrivyLogout,
   onDisconnect,
+  onConnectClick,
 }: {
   hasWallet: boolean;
   walletInfo: { address: string } | null;
   connectionMethod: ConnectionMethod;
   onPrivyLogout: () => Promise<void>;
   onDisconnect: () => Promise<void>;
+  onConnectClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
   if (!hasWallet) {
     return (
-      <span className="text-xs px-3 py-1.5 rounded-full border border-[#e8e8e8] text-[#8d8d8d] bg-white">
+      <button
+        onClick={onConnectClick}
+        className="text-xs px-3 py-1.5 rounded-full border border-[#e8e8e8] text-[#8d8d8d] bg-white hover:border-[#0071f0] hover:text-[#0071f0] transition-colors cursor-pointer"
+      >
         Connect Wallet
-      </span>
+      </button>
     );
   }
 
@@ -327,6 +332,11 @@ export default function Home() {
   const walletInfoRef = useRef(walletInfo);
   walletInfoRef.current = walletInfo;
 
+  const walletCardRef = useRef<HTMLDivElement>(null);
+  const handleConnectClick = useCallback(() => {
+    walletCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
   const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
     if (connectionMethod === 'privy') {
       const adapter = new PrivyTonConnectAdapter();
@@ -401,6 +411,7 @@ export default function Home() {
               connectionMethod={connectionMethod}
               onPrivyLogout={handlePrivyLogout}
               onDisconnect={handleDisconnect}
+              onConnectClick={handleConnectClick}
             />
           </div>
         </div>
@@ -412,7 +423,7 @@ export default function Home() {
         <WelcomeCard />
 
         {/* ウォレット接続カード */}
-        <div className="bg-white rounded-xl border border-[#e8e8e8] p-4">
+        <div ref={walletCardRef} className="bg-white rounded-xl border border-[#e8e8e8] p-4">
           <ConnectionSelector
             selected={connectionMethod}
             onSelect={setConnectionMethod}
