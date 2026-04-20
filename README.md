@@ -9,7 +9,7 @@
 
 ## 🎯 One-Liner
 
-**Hawk** (conservative) と **Dove** (aggressive) という2つのAIボットがTelegramグループ内で議論し、StonFiのOmniston RFQデータに基づいてスワップ実行を決定する自律トレーディングカウンシル。
+**Hawk** (conservative) and **Dove** (aggressive) — two AI bots debate in a Telegram group and autonomously decide whether to execute swaps based on live StonFi Omniston RFQ data.
 
 ## 🏗️ Architecture
 
@@ -36,10 +36,10 @@
 
 | Component | Role | Tech |
 |-----------|------|------|
-| **Manager Bot** | RFQ監視、議論トリガー、決定発表 | grammy + Anthropic LLM |
-| **Hawk Bot** | 保守的論点（リスク重視） | grammy + Anthropic LLM |
-| **Dove Bot** | 積極的論点（機会重視） | grammy + Anthropic LLM |
-| **Mini App** | Privy/Ton Connect + スワップUI | Next.js + Omniston Widget |
+| **Manager Bot** | Monitors RFQ, triggers debate, announces decision | grammy + Anthropic LLM |
+| **Hawk Bot** | Conservative stance (risk-focused) | grammy + Anthropic LLM |
+| **Dove Bot** | Aggressive stance (opportunity-focused) | grammy + Anthropic LLM |
+| **Mini App** | Privy / TON Connect + swap UI | Next.js + Omniston Widget |
 
 ## 🚀 Quick Start
 
@@ -48,7 +48,7 @@
 - Node.js 18+
 - Telegram Bot tokens (3 bots)
 - Anthropic API key
-- `.env` 設定
+- `.env` configured
 
 ### Installation
 
@@ -72,7 +72,7 @@ cp .env.example .env
 # Start Telegram bots
 npm run dev
 
-# Start Mini App (別ターミナル)
+# Start Mini App (separate terminal)
 cd mini-app
 npm run dev
 ```

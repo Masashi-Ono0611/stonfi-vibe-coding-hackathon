@@ -88,7 +88,7 @@ Two AI bots with opposing risk profiles debate in a Telegram group chat and auto
 | 3 | Full debate completes in <10s | ~2s ✅ |
 | 4 | Loop prevention (terminates after N rounds) | Hawk 1 resp, Dove 2 resp ✅ |
 
-See [`feasibility-test/SPEC.md`](../feasibility-test/SPEC.md) for full test specification.
+All four tests passed during initial development.
 
 ## User Experience
 1. User opens Manager Bot in Telegram

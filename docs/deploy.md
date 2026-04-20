@@ -1,9 +1,9 @@
 # Deploy Guide
 
-## 構成
+## Infrastructure
 
-| コンポーネント | ホスト | URL |
-|-------------|--------|-----|
+| Component | Host | URL |
+|-----------|------|-----|
 | Telegram Bots (Manager/Hawk/Dove) | fly.io | hawk-dove-bot.fly.dev |
 | Mini App | Vercel | https://mini-app-rho-bay.vercel.app |
 
@@ -11,19 +11,19 @@
 
 ## Bot — fly.io
 
-### デプロイ手順
+### Deploy
 
 ```bash
-# プロジェクトルートから実行（mini-app/ ではない）
+# Run from project root (not mini-app/)
 cd stonfi-vibe-coding-hackathon
 ~/.fly/bin/fly deploy --app hawk-dove-bot
 ```
 
-- Dockerfile は `src/` のみコピー（mini-app は含まない）
-- 自動デプロイは未設定 → コード変更後は手動 deploy 必須
-- リージョン: nrt（東京）
+- Dockerfile copies only `src/` (mini-app is excluded)
+- Auto-deploy is not configured — manual deploy required after each code change
+- Region: nrt (Tokyo)
 
-### ステータス確認
+### Status
 
 ```bash
 ~/.fly/bin/fly status --app hawk-dove-bot
@@ -31,71 +31,70 @@ cd stonfi-vibe-coding-hackathon
 ~/.fly/bin/fly releases --app hawk-dove-bot
 ```
 
-### 注意事項
+### Notes
 
-- このbotはHTTPサービスではなくTelegram long-pollingのworkerのため、`[http_service]`なしで動作
-- マシン `4d893341f90958` に `autostop=false` を設定済み → デプロイ後も常時起動を維持（確認済み）
-- **新規マシンが作成された場合は下記コマンドで autostop を無効化すること**
+- This bot uses Telegram long-polling (not HTTP), so `[http_service]` is intentionally omitted
+- Machine `4d893341f90958` has `autostop=false` — stays running after deploy (verified)
+- **If a new machine is created, disable autostop with:**
   ```bash
   ~/.fly/bin/fly machine update <MACHINE_ID> --autostop=false --app hawk-dove-bot --yes
   ~/.fly/bin/fly machine start <MACHINE_ID> --app hawk-dove-bot
   ```
-- 環境変数は fly.io の Secrets で管理（`.env` は使わない）
+- Environment variables are managed via fly.io Secrets (not `.env`)
 
 ---
 
 ## Mini App — Vercel
 
-### デプロイ手順
+### Deploy
 
 ```bash
-# mini-app/ ディレクトリから実行
+# Run from mini-app/ directory
 cd stonfi-vibe-coding-hackathon/mini-app
 vercel --prod --scope masashiono0611s-projects --yes
 ```
 
-- 自動デプロイは未設定 → コード変更後は手動 deploy 必須
-  - Vercel の Root Directory を `mini-app` に設定すれば自動化可能（未対応）
-- Preview デプロイ（Error 表示）は feature ブランチへの push で発生するが本番に影響なし
+- Auto-deploy is not configured — manual deploy required after each code change
+- Preview deployments (showing errors) may appear on feature branch pushes — they do not affect production
 
-### ステータス確認
+### Status
 
 ```bash
 cd mini-app
 vercel ls --scope masashiono0611s-projects
 ```
 
-### 重要ファイル
+### Key Files
 
-| ファイル | 用途 |
-|---------|------|
-| `public/tonconnect-manifest.json` | TON Connect 設定。`url` と `iconUrl` は本番 URL |
-| `components/providers.tsx` | `MANIFEST_URL` = 本番 manifest URL |
-| `app/layout.tsx` | OGP メタデータ |
+| File | Purpose |
+|------|---------|
+| `public/tonconnect-manifest.json` | TON Connect config. `url` and `iconUrl` must point to production URL |
+| `components/providers.tsx` | `MANIFEST_URL` = production manifest URL |
+| `app/layout.tsx` | OGP metadata and favicon |
 
 ---
 
-## 変更後の作業チェックリスト
+## Post-Change Checklist
 
-### Bot コード変更時
+### Bot changes
 
 - [ ] `git push`
-- [ ] `~/.fly/bin/fly deploy --app hawk-dove-bot`（プロジェクトルートから）
+- [ ] `~/.fly/bin/fly deploy --app hawk-dove-bot` (from project root)
 
-### Mini App 変更時
+### Mini App changes
 
 - [ ] `git push`
 - [ ] `cd mini-app && vercel --prod --scope masashiono0611s-projects --yes`
 
-### 両方変更時
+### Both changed
 
-上記を両方実施する。
+Run both steps above.
 
 ---
 
-## 環境変数
+## Environment Variables
 
-### Bot（fly.io Secrets）
+### Bot (fly.io Secrets)
 
 ```
 BOT_MANAGER_TOKEN=
@@ -107,7 +106,7 @@ ANTHROPIC_AUTH_TOKEN=
 ANTHROPIC_BASE_URL=
 ```
 
-### Mini App（Vercel Environment Variables）
+### Mini App (Vercel Environment Variables)
 
 ```
 NEXT_PUBLIC_PRIVY_APP_ID=
