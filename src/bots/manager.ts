@@ -34,7 +34,7 @@ export function createManagerBot(callbacks: DebateCallbacks) {
       const swapLink = buildSwapDeepLink();
       if (quote) {
         try {
-          const image = await renderBuySignal(quote);
+          const image = await renderBuySignal();
           await bot.api.sendPhoto(chatId, new InputFile(image), {
             caption: [
               "✅ Decision: SWAP",
