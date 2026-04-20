@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
   description: "Two AI agents debate in Telegram and autonomously execute swaps on TON via StonFi Omniston.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
     description: "Two AI agents debate in Telegram and autonomously execute swaps on TON via StonFi Omniston.",
