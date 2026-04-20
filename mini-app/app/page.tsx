@@ -449,7 +449,7 @@ export default function Home() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">P</div>
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#0071f0] text-xs font-bold flex-shrink-0">P</div>
                   <div>
                     <p className="text-sm font-medium text-white">Privy</p>
                     <p className="text-xs text-white/70 mt-0.5">Passkey or email — no wallet app needed</p>
@@ -466,7 +466,7 @@ export default function Home() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">TC</div>
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#0088cc] text-xs font-bold flex-shrink-0">TC</div>
                   <div>
                     <p className="text-sm font-medium text-white">TON Connect</p>
                     <p className="text-xs text-white/70 mt-0.5">Tonkeeper or any TON wallet app</p>
