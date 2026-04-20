@@ -13,7 +13,6 @@ type SignRawHashFunction = (params: {
 }) => Promise<{ signature: string }>;
 
 interface Adapter {
-  connect(): Promise<void>;
   disconnect(): Promise<void>;
 }
 

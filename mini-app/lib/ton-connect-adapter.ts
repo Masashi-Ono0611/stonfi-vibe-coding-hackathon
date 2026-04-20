@@ -1,5 +1,13 @@
 import { Cell } from '@ton/ton';
-import type { TonConnectUI, WalletInfoWithOpenMethod } from '@tonconnect/ui-react';
+import type { TonConnectUI } from '@tonconnect/ui-react';
+
+type ConnectedWallet = {
+  account: {
+    address: string;
+    chain: number | string;
+    walletStateInit?: string;
+  };
+};
 
 type Wallet = {
   account: {
@@ -33,11 +41,11 @@ type SendTransactionResponse = { boc: string };
 
 export class TonConnectAdapter {
   private _tonConnectUI: TonConnectUI | null = null;
-  private _wallet: WalletInfoWithOpenMethod | null = null;
+  private _wallet: ConnectedWallet | null = null;
   private _listeners: Array<(wallet: Wallet | null) => void> = [];
   private _errorListeners: Array<(err: Error) => void> = [];
 
-  async connect(tonConnectUI: TonConnectUI, walletInfo: WalletInfoWithOpenMethod) {
+  async connect(tonConnectUI: TonConnectUI, walletInfo: ConnectedWallet) {
     this._tonConnectUI = tonConnectUI;
     this._wallet = walletInfo;
     this._notifyListeners();
@@ -49,7 +57,7 @@ export class TonConnectAdapter {
     return {
       account: {
         address: this._wallet.account.address,
-        chain: this._wallet.account.chain || -1,
+        chain: Number(this._wallet.account.chain) || -1,
         walletStateInit: '',
       },
       device: {
