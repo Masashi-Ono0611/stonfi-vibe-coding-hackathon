@@ -30,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           appearance: {
             accentColor: '#1d4ed8',
             theme: 'dark',
-            logo: 'https://hawk-dove-mini-app.vercel.app/icon.png',
+            logo: 'https://mini-app-rho-bay.vercel.app/icon.png',
           },
         }}
       >

@@ -15,7 +15,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
-  description: "TON/STON swap Mini App powered by STON.fi Omniston Widget",
+  description: "Two AI agents debate in Telegram and autonomously execute swaps on TON via StonFi Omniston.",
+  openGraph: {
+    title: "Hawk & Dove — Moltbook-style Agents Debate, Then Swap",
+    description: "Two AI agents debate in Telegram and autonomously execute swaps on TON via StonFi Omniston.",
+    url: "https://mini-app-rho-bay.vercel.app",
+    images: [{ url: "https://mini-app-rho-bay.vercel.app/og-image.png" }],
+  },
 };
 
 export default function RootLayout({
