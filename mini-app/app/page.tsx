@@ -147,12 +147,15 @@ function PrivyWalletSection({
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm text-center">Login with Privy to create an embedded TON wallet</p>
+        <p className="text-[#8d8d8d] text-sm text-center">
+          Sign up or log in with passkey / email.<br />
+          An embedded TON wallet will be created automatically.
+        </p>
         <button
           onClick={login}
           className="px-6 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-lg font-medium transition-colors"
         >
-          Login with Privy
+          Sign up / Log in
         </button>
       </div>
     );
@@ -224,7 +227,9 @@ function TonConnectWalletSection({
   if (!connected || !address) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <p className="text-[#8d8d8d] text-sm text-center">Connect your TON wallet with TON Connect</p>
+        <p className="text-[#8d8d8d] text-sm text-center">
+          Connect Tonkeeper or any TON-compatible wallet.
+        </p>
         <TonConnectButton className="!bg-[#0088cc] hover:!bg-[#0066aa]" />
       </div>
     );
@@ -417,7 +422,7 @@ export default function Home() {
 
       {/* Privy モーダル */}
       {showPrivyModal && (
-        <WalletModal title="Connect with Privy" onClose={() => setShowPrivyModal(false)}>
+        <WalletModal title="Privy" onClose={() => setShowPrivyModal(false)}>
           <PrivyWalletSection
             onWalletReady={handlePrivyWalletReady}
             onLogout={handlePrivyLogout}
@@ -427,7 +432,7 @@ export default function Home() {
 
       {/* TON Connect モーダル */}
       {showTcModal && (
-        <WalletModal title="Connect with TON Connect" onClose={() => setShowTcModal(false)}>
+        <WalletModal title="TON Connect" onClose={() => setShowTcModal(false)}>
           <TonConnectWalletSection
             onWalletReady={handleTcWalletReady}
             onDisconnect={handleTcDisconnect}
