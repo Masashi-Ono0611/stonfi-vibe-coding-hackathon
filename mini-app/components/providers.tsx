@@ -23,9 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <PrivyProvider
         appId={appId}
         config={{
-          loginMethods: ['email'],
-          // TODO: PrivyダッシュボードでTelegram/Google/Walletを有効化した後に追加
-          // loginMethods: ['email', 'telegram', 'google', 'wallet'],
+          loginMethods: ['email', 'passkey', 'google'],
           embeddedWallets: {
             createOnLogin: 'all-users',
           },
