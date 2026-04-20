@@ -21,9 +21,10 @@ interface SwapWidgetProps {
   walletAddress?: string;
   publicKey?: string;
   signRawHash?: SignRawHashFunction;
+  tcWallet?: any;
 }
 
-export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidgetProps) {
+export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: SwapWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<OmnistonWidget | null>(null);
   const adapterRef = useRef<Adapter | null>(null);
@@ -56,26 +57,43 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
           );
 
           adapter = privyAdapter;
+        } else if (tcWallet) {
+          // Use TON Connect adapter
+          const tcAdapter = new TonConnectAdapter();
+          await tcAdapter.connect(tcWallet);
+          adapter = tcAdapter;
         } else {
-          // Use TON Connect adapter (will be initialized by page.tsx)
-          adapter = new TonConnectAdapter();
+          // No adapter available, show standalone widget
+          adapter = null as any;
         }
 
         adapterRef.current = adapter;
 
         const WidgetConstructor = await omnistonWidgetLoader.load();
 
-        widgetRef.current = new WidgetConstructor({
-          tonconnect: {
-            type: 'integrated',
-            instance: adapter as any,
-          },
+        const config: any = {
           widget: {
             defaultBidAsset: 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
             defaultAskAsset: 'EQA2kCVNwVsil2EM2mB0SkXytxCqQjS4mttjDpnXmwG9T6bO',
           },
-        });
+        };
 
+        // Only add tonconnect config if adapter is available
+        if (adapter) {
+          config.tonconnect = {
+            type: 'integrated',
+            instance: adapter,
+          };
+        } else {
+          config.tonconnect = {
+            type: 'standalone',
+            options: {
+              manifestUrl: `${window.location.origin}/tonconnect-manifest.json`,
+            },
+          };
+        }
+
+        widgetRef.current = new WidgetConstructor(config);
         widgetRef.current.mount(containerRef.current);
       } catch (error) {
         console.error('Failed to initialize widget:', error);
@@ -90,7 +108,7 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash }: SwapWidget
       adapterRef.current?.disconnect();
       adapterRef.current = null;
     };
-  }, [walletAddress, publicKey, signRawHash]);
+  }, [walletAddress, publicKey, signRawHash, tcWallet]);
 
   if (!walletAddress) {
     return (

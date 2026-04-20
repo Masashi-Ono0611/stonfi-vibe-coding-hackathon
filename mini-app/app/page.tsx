@@ -210,6 +210,7 @@ export default function Home() {
     address: string;
     publicKey?: string;
     adapter: PrivyTonConnectAdapter | TonConnectAdapter;
+    tcWallet?: any;
   } | null>(null);
 
   // Handle wallet ready callback
@@ -228,6 +229,7 @@ export default function Home() {
       setWalletInfo({
         address: wallet.address,
         adapter: adapter as any,
+        tcWallet: tcWallet,
       });
     }
   };
@@ -277,6 +279,7 @@ export default function Home() {
               walletAddress={walletInfo.address}
               publicKey={walletInfo.publicKey || ''}
               signRawHash={connectionMethod === 'privy' ? signRawHash : undefined}
+              tcWallet={walletInfo.tcWallet}
             />
           </section>
         )}
