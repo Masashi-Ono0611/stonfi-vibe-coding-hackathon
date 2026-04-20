@@ -54,6 +54,7 @@ function scheduleReconnect() {
 
   reconnectTimer = setTimeout(() => {
     console.log("[RFQ] Attempting to reconnect...");
+    monitoring = false;
     cleanup();
     startMonitoring();
   }, 5000); // Reconnect after 5 seconds
