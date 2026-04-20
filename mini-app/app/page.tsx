@@ -216,6 +216,9 @@ export default function Home() {
     tcWallet?: any;
   } | null>(null);
 
+  const walletInfoRef = useRef(walletInfo);
+  walletInfoRef.current = walletInfo;
+
   // Handle wallet ready callback
   const handleWalletReady = (wallet: { address: string; publicKey?: string }, tcWallet?: any) => {
     if (connectionMethod === 'privy') {
@@ -239,22 +242,24 @@ export default function Home() {
 
   // Handle wallet disconnect
   const handleDisconnect = useCallback(async () => {
-    if (walletInfo?.adapter) {
+    const currentWalletInfo = walletInfoRef.current;
+    if (currentWalletInfo?.adapter) {
       try {
-        await walletInfo.adapter.disconnect();
+        await currentWalletInfo.adapter.disconnect();
       } catch (error) {
         console.error('Failed to disconnect adapter:', error);
       }
     }
     setWalletInfo(null);
-  }, [walletInfo]);
+  }, []);
 
   // Disconnect current wallet when connection method changes
   useEffect(() => {
     const cleanup = async () => {
-      if (walletInfo?.adapter) {
+      const currentWalletInfo = walletInfoRef.current;
+      if (currentWalletInfo?.adapter) {
         try {
-          await walletInfo.adapter.disconnect();
+          await currentWalletInfo.adapter.disconnect();
         } catch (error) {
           console.error('Failed to disconnect adapter on method change:', error);
         }
@@ -263,14 +268,14 @@ export default function Home() {
     };
 
     cleanup();
-  }, [connectionMethod, walletInfo]);
+  }, [connectionMethod]);
 
   // Handle Privy logout - disconnect Omniston widget
   useEffect(() => {
-    if (connectionMethod === 'privy' && !authenticated && walletInfo) {
+    if (connectionMethod === 'privy' && !authenticated && walletInfoRef.current) {
       handleDisconnect();
     }
-  }, [authenticated, connectionMethod, walletInfo, handleDisconnect]);
+  }, [authenticated, connectionMethod, handleDisconnect]);
 
   // Add logout handler to PrivyWalletSection
   const handlePrivyLogout = useCallback(async () => {
