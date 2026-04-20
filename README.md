@@ -167,6 +167,7 @@ ANTHROPIC_AUTH_TOKEN=
 
 ## 📖 Documentation
 
+- [Deploy Guide](./docs/deploy.md) - Bot (fly.io) & Mini App (Vercel) deploy手順
 - [Full Spec](./docs/spec.md) - Complete technical specification
 - [Project Ideas](./docs/project-ideas.md) - Alternative approaches
 - [Feasibility Test](./feasibility-test/SPEC.md) - Bot-to-bot communication validation
