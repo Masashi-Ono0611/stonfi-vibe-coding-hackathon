@@ -1,4 +1,14 @@
-import { Address, beginCell, Cell, TonClient, WalletContractV4 } from '@ton/ton';
+import {
+  Address,
+  beginCell,
+  Cell,
+  TonClient,
+  WalletContractV4,
+  internal,
+  external,
+  storeMessageRelaxed,
+  storeMessage,
+} from '@ton/ton';
 
 type Wallet = {
   account: {
@@ -48,14 +58,9 @@ export class PrivyTonConnectAdapter {
   }
 
   async connect(address: string, publicKey: string, signCallback: SignCallback) {
-    if (!address) {
-      throw new Error('Address is required');
-    }
-    if (!publicKey) {
-      throw new Error('PublicKey is required');
-    }
+    if (!address) throw new Error('Address is required');
+    if (!publicKey) throw new Error('PublicKey is required');
 
-    // Address.parse for user-friendly format (EQ:...), Address.parseRaw for raw format (0:...)
     this._address = Address.parse(address);
     this._publicKey = Buffer.from(publicKey, 'hex');
     this._signCallback = signCallback;
@@ -126,61 +131,64 @@ export class PrivyTonConnectAdapter {
       publicKey: this._publicKey,
     });
 
-    const seqno = await this._client
-      .runMethodWithError(this._address, 'seqno')
-      .then((r) => r.stack.readNumber())
-      .catch(() => BigInt(0));
+    // seqno をオンチェーンから取得
+    const contract = this._client.open(walletContract);
+    const seqno = await contract.getSeqno();
 
-    const outMessages = txReq.messages.map((msg) => {
-      const body = msg.payload ? Cell.fromBase64(msg.payload) : undefined;
-      return beginCell()
-        .storeUint(0, 2)
-        .storeAddress(Address.parse(msg.address))
-        .storeCoins(BigInt(msg.amount))
-        .storeMaybeRef(body)
-        .storeBit(false)
-        .endCell();
+    // WalletV4 のメッセージボディを正しく構築（署名前）
+    const bodyBuilder = beginCell()
+      .storeUint(walletContract.walletId, 32)  // subWalletId (698983191)
+      .storeUint(txReq.validUntil, 32)          // validUntil
+      .storeUint(seqno, 32)                     // seqno（取得した実際の値）
+      .storeUint(0, 8);                         // opCode = 0 (simple order)
+
+    for (const msg of txReq.messages) {
+      const internalMsg = internal({
+        to: Address.parse(msg.address),
+        value: BigInt(msg.amount),
+        body: msg.payload ? Cell.fromBase64(msg.payload) : undefined,
+        init: msg.stateInit
+          ? { code: Cell.fromBase64(msg.stateInit), data: undefined }
+          : undefined,
+        bounce: true,
+      });
+      bodyBuilder.storeUint(3, 8); // SendMode: PAY_GAS_SEPARATELY | IGNORE_ERRORS
+      bodyBuilder.storeRef(
+        beginCell().store(storeMessageRelaxed(internalMsg)).endCell()
+      );
+    }
+
+    const bodyCell = bodyBuilder.endCell();
+
+    // Privy で署名（bodyCell のハッシュを渡す）
+    const signature = await this._signCallback(bodyCell.hash().toString('hex'));
+
+    // 署名 + ボディを結合した署名済みセル
+    const signedCell = beginCell()
+      .storeBuffer(signature)
+      .storeSlice(bodyCell.asSlice())
+      .endCell();
+
+    // external メッセージを構築
+    const externalMsg = external({
+      to: this._address,
+      init: seqno === 0 ? walletContract.init : undefined,
+      body: signedCell,
     });
 
-    const transfers = beginCell().storeUint(0, 32).storeUint(0, 64);
-    for (const msg of outMessages) {
-      transfers.storeBit(true).storeRef(msg);
-    }
-    transfers.storeBit(false);
-
-    const signingMessage = beginCell()
-      .storeUint(txReq.validUntil, 32)
-      .storeUint(0, 32)
-      .storeRef(transfers.endCell())
+    const externalCell = beginCell()
+      .store(storeMessage(externalMsg))
       .endCell();
 
-    const signingHash = signingMessage.hash();
-
-    const signature = await this._signCallback(signingHash.toString('hex'));
-
-    const message = beginCell()
-      .storeBuffer(signature)
-      .storeRef(signingMessage)
-      .endCell();
-
-    const external = beginCell()
-      .storeUint(0x82, 2)
-      .storeRef(walletContract.init.code)
-      .storeRef(walletContract.init.data)
-      .storeRef(message)
-      .endCell();
-
-    const boc = external.toBoc();
+    const boc = externalCell.toBoc();
     await this._client.sendFile(boc);
 
-    return { boc: Buffer.from(boc).toString('base64') };
+    return { boc: boc.toString('base64') };
   }
 
   private _notifyListeners() {
     for (const l of this._listeners) {
-      try {
-        l(this._wallet);
-      } catch (_) {}
+      try { l(this._wallet); } catch (_) {}
     }
   }
 }

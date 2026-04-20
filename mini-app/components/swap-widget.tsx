@@ -13,7 +13,6 @@ type SignRawHashFunction = (params: {
 }) => Promise<{ signature: string }>;
 
 interface Adapter {
-  connect(): Promise<void>;
   disconnect(): Promise<void>;
 }
 
@@ -22,9 +21,10 @@ interface SwapWidgetProps {
   publicKey?: string;
   signRawHash?: SignRawHashFunction;
   tcWallet?: any;
+  tonConnectUI?: any;
 }
 
-export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: SwapWidgetProps) {
+export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet, tonConnectUI }: SwapWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<OmnistonWidget | null>(null);
   const adapterRef = useRef<Adapter | null>(null);
@@ -59,10 +59,10 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
           );
 
           adapter = privyAdapter;
-        } else if (tcWallet) {
-          // Use TON Connect adapter
+        } else if (tcWallet && tonConnectUI) {
+          // Use TON Connect adapter — requires TonConnectUI to trigger wallet app
           const tcAdapter = new TonConnectAdapter();
-          await tcAdapter.connect(tcWallet);
+          await tcAdapter.connect(tonConnectUI, tcWallet);
           adapter = tcAdapter;
         }
 
@@ -112,7 +112,7 @@ export function SwapWidget({ walletAddress, publicKey, signRawHash, tcWallet }: 
       adapterRef.current?.disconnect();
       adapterRef.current = null;
     };
-  }, [walletAddress, publicKey, signRawHash, tcWallet]);
+  }, [walletAddress, publicKey, signRawHash, tcWallet, tonConnectUI]);
 
   if (!walletAddress) {
     return (
