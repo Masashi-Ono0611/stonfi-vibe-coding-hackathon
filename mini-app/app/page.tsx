@@ -446,7 +446,7 @@ export default function Home() {
               onClick={() => setShowPrivyModal(true)}
               className="flex-1 py-3 bg-[#0071f0] hover:bg-[#0063e0] text-white rounded-xl font-medium transition-colors text-sm"
             >
-              Connect with Privy
+              Privy
             </button>
             <button
               onClick={() => { tcManuallyDisconnected.current = false; setShowTcModal(true); }}
