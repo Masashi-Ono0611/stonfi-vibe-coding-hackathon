@@ -5,7 +5,7 @@
 | Component | Host | URL |
 |-----------|------|-----|
 | Telegram Bots (Manager/Hawk/Dove) | fly.io | hawk-dove-bot.fly.dev |
-| Mini App | Vercel | https://mini-app-rho-bay.vercel.app |
+| Web App | Vercel | https://mini-app-rho-bay.vercel.app |
 
 ---
 
@@ -44,7 +44,7 @@ cd stonfi-vibe-coding-hackathon
 
 ---
 
-## Mini App — Vercel
+## Web App — Vercel
 
 ### Deploy
 
@@ -81,7 +81,7 @@ vercel ls --scope masashiono0611s-projects
 - [ ] `git push`
 - [ ] `~/.fly/bin/fly deploy --app hawk-dove-bot` (from project root)
 
-### Mini App changes
+### Web App changes
 
 - [ ] `git push`
 - [ ] `cd mini-app && vercel --prod --scope masashiono0611s-projects --yes`
@@ -106,7 +106,7 @@ ANTHROPIC_AUTH_TOKEN=
 ANTHROPIC_BASE_URL=
 ```
 
-### Mini App (Vercel Environment Variables)
+### Web App (Vercel Environment Variables)
 
 ```
 NEXT_PUBLIC_PRIVY_APP_ID=
