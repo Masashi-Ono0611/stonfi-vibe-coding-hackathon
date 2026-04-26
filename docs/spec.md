@@ -77,7 +77,7 @@ Two AI bots with opposing risk profiles debate in a Telegram group chat and auto
 - **Omniston SDK**: `@ston-fi/omniston-sdk` — RFQ WebSocket streaming (live data for debates)
 - **STON.fi DEX SDK**: `@ston-fi/sdk` — Swap transaction building
 - **Telegram Bot API**: Bot-to-Bot Communication (grammy)
-- **Runtime**: Node.js (bot backend) + optional Mini App (dashboard)
+- **Runtime**: Node.js (bot backend) + Web App (Next.js, deployed on Vercel)
 
 ## Feasibility Test Results
 
@@ -99,8 +99,8 @@ All four tests passed during initial development.
 6. Manager announces decision, swap executes on consensus
 
 ## Hackathon Scope
-- MVP: 3 bots (Manager, Hawk, Dove) + Omniston RFQ data + /debate trigger + 1 swap pair
-- Out of scope: Smart contracts, cross-chain, multi-asset portfolio, Managed Bots API, Mini App dashboard
+- MVP: 3 bots (Manager, Hawk, Dove) + Omniston RFQ data + /debate trigger + 1 swap pair + Web App (Privy + TON Connect + Omniston Widget)
+- Out of scope: Smart contracts, cross-chain, multi-asset portfolio, Managed Bots API
 
 ## Next Steps
 1. Add LLM prompts for natural language debate (replace template responses)
