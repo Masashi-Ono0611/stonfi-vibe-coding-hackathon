@@ -25,7 +25,7 @@
 └─────────────────────────────────────────────────────────────┘
                            ↓
                   ┌─────────────────┐
-                  │   Mini App      │
+                  │   Web App       │
                   │  (Privy/TC)     │
                   │  + Omniston     │
                   │   Swap Widget   │
@@ -39,7 +39,7 @@
 | **Manager Bot** | Monitors RFQ, triggers debate, announces decision | grammy + Anthropic LLM |
 | **Hawk Bot** | Conservative stance (risk-focused) | grammy + Anthropic LLM |
 | **Dove Bot** | Aggressive stance (opportunity-focused) | grammy + Anthropic LLM |
-| **Mini App** | Privy / TON Connect + swap UI | Next.js + Omniston Widget |
+| **Web App** | Privy / TON Connect + swap UI | Next.js + Omniston Widget |
 
 ## 🚀 Quick Start
 
@@ -72,14 +72,14 @@ cp .env.example .env
 # Start Telegram bots
 npm run dev
 
-# Start Mini App (separate terminal)
+# Start Web App (separate terminal)
 cd mini-app
 npm run dev
 ```
 
 Visit `http://localhost:3000`
 
-## 📱 Mini App Features
+## 🌐 Web App Features
 
 - **Independent Wallet Management**: Privy (embedded wallet) & TON Connect managed separately
 - **Header Wallet Status**: Real-time connection state shown as pill buttons in the top-right
@@ -105,7 +105,7 @@ Round 4: Manager→ "Decision: SWAP" → Execute
 - **@anthropic-ai/sdk**: LLM for natural debate
 - **@ston-fi/omniston-sdk**: RFQ WebSocket streaming
 
-### Frontend (Mini App)
+### Frontend (Web App)
 - **Next.js 16**: React framework
 - **@privy-io/react-auth**: Embedded wallet
 - **@tonconnect/ui-react**: TON Connect
@@ -154,7 +154,7 @@ ANTHROPIC_AUTH_TOKEN=
 - [x] Bot-to-bot communication in Telegram
 - [x] Omniston RFQ WebSocket integration
 - [x] `/debate` command with live data
-- [x] Mini App with Privy + TON Connect
+- [x] Web App with Privy + TON Connect
 - [x] Omniston Widget swap UI
 
 ### 🚧 Future Enhancements
@@ -166,7 +166,7 @@ ANTHROPIC_AUTH_TOKEN=
 
 ## 📖 Documentation
 
-- [Deploy Guide](./docs/deploy.md) - Bot (fly.io) & Mini App (Vercel) deployment steps
+- [Deploy Guide](./docs/deploy.md) - Bot (fly.io) & Web App (Vercel) deployment steps
 - [Full Spec](./docs/spec.md) - Complete technical specification
 
 ## 🤝 Contributing
